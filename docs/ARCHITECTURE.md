@@ -41,9 +41,14 @@ lib/
 │   │   ├── request_manager.dart       # Request cancellation manager
 │   │   ├── mock_data.dart             # Mock data generator
 │   │   └── models/                    # Network models (FeedPage)
+│   ├── cache/                         # Caching layer
+│   │   ├── cache_manager.dart         # Generic cache manager wrapping Hive
+│   │   ├── cache_strategy.dart        # Cache strategy patterns
+│   │   └── cache_providers.dart       # Cache manager providers
 │   ├── theme/                         # Design system & theming
 │   ├── utils/                         # Shared utilities
-│   │   └── connectivity_monitor.dart  # Connectivity monitoring
+│   │   ├── connectivity_monitor.dart  # Connectivity monitoring
+│   │   └── app_lifecycle.dart         # App lifecycle state monitoring
 │   ├── constants/                     # App-wide constants
 │   └── error/                         # Error handling
 └── shared/
@@ -330,11 +335,60 @@ final onlineStatus = ref.watch(onlineStatusProvider);
 - Persisting agent configurations
 - Optimistic update queue
 
+**Cache Manager** (`lib/core/cache/cache_manager.dart`):
+- Generic `CacheManager` class wrapping Hive for typed caching operations
+- Methods: `get<T>`, `set<T>`, `delete`, `clear`, `getWithTTL`
+- TTL (Time To Live) support with default 5-minute expiration
+- Automatic timestamp tracking for cache freshness
+- Support for typed Hive boxes with registered adapters
+
+**Hive Type Adapters**:
+- `PostAdapter` (typeId: 0): Manual adapter for Post model
+- `ReplyAdapter` (typeId: 1): Manual adapter for Reply model
+- `AuthorAdapter` (typeId: 2): Manual adapter for Author model
+- `OptimisticStateAdapter` (typeId: 3): Manual adapter for OptimisticState enum
+
+**Cache Strategies** (`lib/core/cache/cache_strategy.dart`):
+- `CacheStrategy.cacheFirst`: Return cache if exists, else fetch from network
+- `CacheStrategy.networkFirst`: Fetch from network, fallback to cache on error
+- `CacheStrategy.staleWhileRevalidate`: Return cache immediately, fetch in background and update
+
+**Usage Example**:
+```dart
+// Using cache manager
+final cacheManager = ref.read(cacheManagerProvider);
+await cacheManager.set('feed_key', feedData);
+final cachedFeed = cacheManager.get<FeedPage>('feed_key');
+
+// Using cache strategy
+final result = await executeCacheStrategy<FeedPage>(
+  strategy: CacheStrategy.staleWhileRevalidate,
+  cacheManager: cacheManager,
+  key: 'feed_key',
+  fetchFn: () => apiClient.getFeed(),
+);
+```
+
 **Boxes**:
-- `feedBox`: Cached feed posts
-- `userBox`: User preferences and settings
-- `agentsBox`: Agent configurations
-- `queueBox`: Pending optimistic updates
+- `cache`: Default cache box managed by CacheManager
+- Custom boxes can be created for specific use cases
+
+**App Lifecycle Monitoring** (`lib/core/utils/app_lifecycle.dart`):
+- Riverpod provider (`appLifecycleProvider`) monitoring `AppLifecycleState`
+- Exposes current lifecycle state for request cancellation logic
+- Extension methods for checking backgrounded/foregrounded states
+- Useful for cancelling network requests when app goes to background
+
+**Usage Example**:
+```dart
+// Watch app lifecycle state
+final lifecycleState = ref.watch(appLifecycleProvider);
+
+// Check if app is backgrounded
+if (lifecycleState.isBackgrounded) {
+  // Cancel ongoing requests
+}
+```
 
 ---
 
@@ -490,6 +544,7 @@ The project uses code generation for:
 - **Freezed**: Immutable models and unions (`*.freezed.dart`)
 - **JSON Serialization**: JSON encoding/decoding (`*.g.dart`)
 - **Riverpod**: Provider code generation
+- **Hive**: Type adapters (manual adapters used for Freezed classes)
 
 **Commands**:
 ```bash
@@ -499,6 +554,8 @@ flutter pub run build_runner build --delete-conflicting-outputs
 # Watch mode for development
 flutter pub run build_runner watch
 ```
+
+**Note**: Hive type adapters for Post, Reply, Author, and OptimisticState are implemented manually since Freezed classes don't work directly with `hive_generator`. The adapters serialize/deserialize using JSON conversion methods.
 
 ---
 

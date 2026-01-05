@@ -25,7 +25,8 @@ This project is a starting point for a Flutter application.
 
 1. Clone this repository
 2. Run `flutter pub get` to install dependencies
-3. Run `flutter run` to start the app
+3. Run `flutter pub run build_runner build --delete-conflicting-outputs` to generate code (Freezed, JSON serialization, etc.)
+4. Run `flutter run` to start the app
 
 ### Running the App
 
@@ -64,8 +65,13 @@ lib/
       request_manager.dart  # Request cancellation manager
       mock_data.dart       # Mock data generator (50+ posts)
       models/             # Network models (FeedPage)
+    cache/            # Caching layer
+      cache_manager.dart   # Generic cache manager wrapping Hive
+      cache_strategy.dart  # Cache strategy patterns
+      cache_providers.dart # Cache manager providers
     utils/            # Utilities
       connectivity_monitor.dart  # Connectivity monitoring
+      app_lifecycle.dart         # App lifecycle state monitoring
 android/              # Android-specific code
 ios/                  # iOS-specific code
 test/                 # Widget and unit tests
@@ -83,6 +89,9 @@ docs/                 # Project documentation
 - **Request Management**: Automatic request cancellation integrated with Riverpod providers
 - **Connectivity Monitoring**: Real-time network status monitoring using connectivity_plus
 - **Mock Data**: 50+ sample posts with varied coffee-related content for testing
+- **Caching Layer**: Hive-based caching with stale-while-revalidate strategy
+- **Cache Strategies**: Multiple caching strategies (cache-first, network-first, stale-while-revalidate)
+- **App Lifecycle Monitoring**: Riverpod provider for app lifecycle state management
 
 ## Documentation
 

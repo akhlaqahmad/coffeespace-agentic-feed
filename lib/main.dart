@@ -1,10 +1,34 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'features/feed/data/models/post.dart';
+import 'features/feed/data/models/reply.dart';
+import 'features/feed/data/models/author.dart';
+import 'features/feed/data/models/optimistic_state.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
-  runApp(const MyApp());
+
+  // Register Hive type adapters
+  if (!Hive.isAdapterRegistered(0)) {
+    Hive.registerAdapter(PostAdapter());
+  }
+  if (!Hive.isAdapterRegistered(1)) {
+    Hive.registerAdapter(ReplyAdapter());
+  }
+  if (!Hive.isAdapterRegistered(2)) {
+    Hive.registerAdapter(AuthorAdapter());
+  }
+  if (!Hive.isAdapterRegistered(3)) {
+    Hive.registerAdapter(OptimisticStateAdapter());
+  }
+
+  runApp(
+    const ProviderScope(
+      child: MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {

@@ -27,12 +27,8 @@ mixin _$Reply {
   DateTime get createdAt => throw _privateConstructorUsedError;
   OptimisticState? get optimisticState => throw _privateConstructorUsedError;
 
-  /// Serializes this Reply to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of Reply
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $ReplyCopyWith<Reply> get copyWith => throw _privateConstructorUsedError;
 }
 
@@ -62,8 +58,6 @@ class _$ReplyCopyWithImpl<$Res, $Val extends Reply>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of Reply
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -102,8 +96,6 @@ class _$ReplyCopyWithImpl<$Res, $Val extends Reply>
     ) as $Val);
   }
 
-  /// Create a copy of Reply
-  /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
   $AuthorCopyWith<$Res> get author {
@@ -140,8 +132,6 @@ class __$$ReplyImplCopyWithImpl<$Res>
       _$ReplyImpl _value, $Res Function(_$ReplyImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of Reply
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -228,14 +218,12 @@ class _$ReplyImpl implements _Reply {
                 other.optimisticState == optimisticState));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(
       runtimeType, id, postId, author, content, createdAt, optimisticState);
 
-  /// Create a copy of Reply
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$ReplyImplCopyWith<_$ReplyImpl> get copyWith =>
@@ -272,11 +260,8 @@ abstract class _Reply implements Reply {
   DateTime get createdAt;
   @override
   OptimisticState? get optimisticState;
-
-  /// Create a copy of Reply
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$ReplyImplCopyWith<_$ReplyImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

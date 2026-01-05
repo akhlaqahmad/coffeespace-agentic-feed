@@ -24,12 +24,8 @@ mixin _$FeedPage {
   List<Post> get posts => throw _privateConstructorUsedError;
   String? get nextCursor => throw _privateConstructorUsedError;
 
-  /// Serializes this FeedPage to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of FeedPage
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $FeedPageCopyWith<FeedPage> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -55,8 +51,6 @@ class _$FeedPageCopyWithImpl<$Res, $Val extends FeedPage>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of FeedPage
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -98,8 +92,6 @@ class __$$FeedPageImplCopyWithImpl<$Res>
       _$FeedPageImpl _value, $Res Function(_$FeedPageImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of FeedPage
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -158,14 +150,12 @@ class _$FeedPageImpl implements _FeedPage {
                 other.nextCursor == nextCursor));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(
       runtimeType, const DeepCollectionEquality().hash(_posts), nextCursor);
 
-  /// Create a copy of FeedPage
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$FeedPageImplCopyWith<_$FeedPageImpl> get copyWith =>
@@ -193,11 +183,8 @@ abstract class _FeedPage implements FeedPage {
   List<Post> get posts;
   @override
   String? get nextCursor;
-
-  /// Create a copy of FeedPage
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$FeedPageImplCopyWith<_$FeedPageImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

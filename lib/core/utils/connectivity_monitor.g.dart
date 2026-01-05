@@ -24,8 +24,6 @@ final connectivityStreamProvider =
   allTransitiveDependencies: null,
 );
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
 typedef ConnectivityStreamRef
     = AutoDisposeStreamProviderRef<ConnectivityResult>;
 String _$connectivityStatusHash() =>
@@ -46,8 +44,6 @@ final connectivityStatusProvider =
   allTransitiveDependencies: null,
 );
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
 typedef ConnectivityStatusRef
     = AutoDisposeFutureProviderRef<ConnectivityResult>;
 String _$isOnlineHash() => r'e80a453235a33422d617b46e83636eb85a9111bc';
@@ -65,8 +61,6 @@ final isOnlineProvider = AutoDisposeFutureProvider<bool>.internal(
   allTransitiveDependencies: null,
 );
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
 typedef IsOnlineRef = AutoDisposeFutureProviderRef<bool>;
 String _$onlineStatusHash() => r'56d89a94edde659c60c8592fc5f6ed25526619a3';
 
@@ -83,8 +77,6 @@ final onlineStatusProvider = AutoDisposeStreamProvider<bool>.internal(
   allTransitiveDependencies: null,
 );
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
 typedef OnlineStatusRef = AutoDisposeStreamProviderRef<bool>;
 // ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member
