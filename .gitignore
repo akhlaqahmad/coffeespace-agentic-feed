@@ -32,6 +32,11 @@ migrate_working_dir/
 .pub/
 /build/
 
+# Generated files (build_runner)
+*.g.dart
+*.freezed.dart
+*.hive.dart
+
 # Symbolication related
 app.*.symbols
 
@@ -43,5 +48,73 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+# Android
+android/local.properties
+android/.gradle/
+android/app/build/
+android/build/
+android/.idea/
+android/.gradle/
+android/captures/
+android/.externalNativeBuild/
+android/.cxx/
+
+# iOS
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/ephemeral/
+ios/Flutter/Flutter.podspec
+ios/Podfile.lock
+**/xcuserdata/
+ios/.flutter-plugins
+ios/.flutter-plugins-dependencies
+ios/Flutter/Generated.xcconfig
+ios/Flutter/flutter_export_environment.sh
+
+# macOS
+macos/Pods/
+macos/.symlinks/
+macos/Flutter/ephemeral/
+macos/Flutter/Flutter-Generated.xcconfig
+macos/Flutter/flutter_export_environment.sh
+macos/Podfile.lock
+
+# Linux
+linux/flutter/ephemeral/
+linux/flutter/generated_plugin_registrant.cc
+linux/flutter/generated_plugin_registrant.h
+linux/flutter/generated_plugins.cmake
+
+# Windows
+windows/flutter/ephemeral/
+windows/flutter/generated_plugin_registrant.cc
+windows/flutter/generated_plugin_registrant.h
+windows/flutter/generated_plugins.cmake
+
+# Web
+web/
+
 # Cursor-specific (keep .cursorrules and .cursor/workflows in version control)
 # .cursor/  # Don't ignore - we want workflows in version control
+
+# Coverage
+coverage/
+*.lcov
+
+# Test related
+test/.test_coverage.dart
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Temporary files
+*.tmp
+*.temp
+*~
+
+# OS generated files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
