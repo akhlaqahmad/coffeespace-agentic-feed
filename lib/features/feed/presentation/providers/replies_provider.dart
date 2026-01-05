@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/cache/cache_manager.dart';
 import '../../../../core/cache/cache_providers.dart';
 import '../../../../core/network/request_manager.dart';
+import '../../../../core/utils/connectivity_monitor.dart';
+import '../../../../shared/providers/error_provider.dart';
 import '../../data/models/post.dart';
 import '../../data/models/reply.dart';
 import '../../data/models/author.dart';
@@ -60,8 +62,27 @@ class RepliesNotifier extends StateNotifier<RepliesState> {
   }
 
   /// Loads replies for the post
+  /// When offline, shows cached replies if available
   Future<void> loadReplies() async {
     state = state.copyWith(isLoading: true, error: null);
+
+    // Check connectivity before making network call
+    final isOnline = await _ref.read(isOnlineProvider.future);
+    if (!isOnline) {
+      // Offline: can't load replies from network
+      // Keep existing replies (optimistic ones) and show error
+      state = state.copyWith(
+        isLoading: false,
+        error: 'No internet connection',
+      );
+      _ref.read(errorProvider.notifier).addError(
+        AppError(
+          message: 'Cannot load replies while offline',
+          errorType: ErrorType.network,
+        ),
+      );
+      return;
+    }
 
     try {
       final replies = await _repository.getReplies(
@@ -83,6 +104,13 @@ class RepliesNotifier extends StateNotifier<RepliesState> {
         isLoading: false,
         error: e.toString(),
       );
+
+      // Show error banner
+      if (e is DioException) {
+        _ref.read(errorProvider.notifier).addDioError(e);
+      } else {
+        _ref.read(errorProvider.notifier).addException(e);
+      }
     }
   }
 
@@ -127,7 +155,21 @@ class RepliesNotifier extends StateNotifier<RepliesState> {
     });
     _timeoutTimers[tempId] = timeoutTimer;
 
-    // Step 3: Make API call in background
+    // Step 3: Check connectivity before making API call
+    final isOnline = await _ref.read(isOnlineProvider.future);
+    if (!isOnline) {
+      // Offline: revert optimistic update and show error
+      _revertReply(tempId, 'No internet connection');
+      _ref.read(errorProvider.notifier).addError(
+        AppError(
+          message: 'Cannot post reply while offline',
+          errorType: ErrorType.network,
+        ),
+      );
+      return;
+    }
+
+    // Step 4: Make API call in background
     try {
       final confirmedReply = await _repository.addReply(
         postId: _postId,
@@ -140,7 +182,7 @@ class RepliesNotifier extends StateNotifier<RepliesState> {
         return; // A newer request exists or was reverted
       }
 
-      // Step 4: On success - replace temp reply with confirmed reply
+      // Step 5: On success - replace temp reply with confirmed reply
       final updatedRepliesList = state.replies.map((reply) {
         if (reply.id == tempId) {
           return confirmedReply.copyWith(
@@ -172,7 +214,7 @@ class RepliesNotifier extends StateNotifier<RepliesState> {
         return;
       }
 
-      // Step 5: On failure - revert changes and set failed state
+      // Step 6: On failure - revert changes and set failed state
       _revertReply(tempId, e.toString());
     }
   }
@@ -197,6 +239,17 @@ class RepliesNotifier extends StateNotifier<RepliesState> {
     _tempIdToRequestId.remove(tempId);
     _timeoutTimers[tempId]?.cancel();
     _timeoutTimers.remove(tempId);
+
+    // Show error banner for optimistic failure
+    if (error.contains('DioException') || error.contains('network')) {
+      _ref.read(errorProvider.notifier).addOptimisticFailure(
+        'Failed to post reply. Please try again.',
+      );
+    } else {
+      _ref.read(errorProvider.notifier).addOptimisticFailure(
+        'Failed to post reply. Please try again.',
+      );
+    }
   }
 
   /// Retries a failed reply

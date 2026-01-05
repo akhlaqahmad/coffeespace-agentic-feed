@@ -6,6 +6,8 @@ import 'features/feed/data/models/reply.dart';
 import 'features/feed/data/models/author.dart';
 import 'features/feed/data/models/optimistic_state.dart';
 import 'features/feed/presentation/screens/feed_screen.dart';
+import 'shared/widgets/error_banner_overlay.dart';
+import 'shared/widgets/offline_indicator.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -43,7 +45,9 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.brown),
         useMaterial3: true,
       ),
-      home: const FeedScreen(),
+      home: const ErrorBannerOverlay(
+        child: FeedScreen(),
+      ),
     );
   }
 }

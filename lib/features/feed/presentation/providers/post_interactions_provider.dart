@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/cache/cache_manager.dart';
 import '../../../../core/cache/cache_providers.dart';
 import '../../../../core/network/request_manager.dart';
+import '../../../../core/utils/connectivity_monitor.dart';
+import '../../../../shared/providers/error_provider.dart';
 import '../../data/models/post.dart';
 import '../../data/models/optimistic_state.dart';
 import '../../data/repositories/feed_repository.dart';
@@ -133,7 +135,25 @@ class LikeInteractionNotifier extends StateNotifier<Map<String, Post>> {
     });
     _timeoutTimers[postId] = timeoutTimer;
 
-    // Step 3: Make API call in background
+    // Step 3: Check connectivity before making API call
+    final isOnline = await _ref.read(isOnlineProvider.future);
+    if (!isOnline) {
+      // Offline: revert optimistic update and show error
+      _revertLikeToggle(
+        postId,
+        originalPost,
+        'No internet connection',
+      );
+      _ref.read(errorProvider.notifier).addError(
+        AppError(
+          message: 'Cannot like post while offline',
+          errorType: ErrorType.network,
+        ),
+      );
+      return;
+    }
+
+    // Step 4: Make API call in background
     try {
       final updatedPost = await _repository.toggleLike(
         postId: postId,
@@ -145,7 +165,7 @@ class LikeInteractionNotifier extends StateNotifier<Map<String, Post>> {
         return; // A newer request exists, ignore this response
       }
 
-      // Step 4: On success - update to confirmed
+      // Step 5: On success - update to confirmed
       final confirmedPost = updatedPost.copyWith(
         optimisticState: OptimisticState.confirmed,
       );
@@ -163,7 +183,7 @@ class LikeInteractionNotifier extends StateNotifier<Map<String, Post>> {
         return; // A newer request exists, ignore this error
       }
 
-      // Step 5: On failure - revert changes and set failed state
+      // Step 6: On failure - revert changes and set failed state
       _revertLikeToggle(postId, originalPost, e.toString());
     }
   }
@@ -176,14 +196,20 @@ class LikeInteractionNotifier extends StateNotifier<Map<String, Post>> {
     _updateFeedPost(postId, failedPost);
     _updateCache(postId, failedPost);
 
-    // Cleanup
-    _pendingRequests.remove(postId);
-    _timeoutTimers[postId]?.cancel();
-    _timeoutTimers.remove(postId);
+      // Cleanup
+      _pendingRequests.remove(postId);
+      _timeoutTimers[postId]?.cancel();
+      _timeoutTimers.remove(postId);
 
-    // Show error (could emit to an error provider or use a snackbar)
-    // For now, we'll just revert the state
-  }
+      // Show error banner for optimistic failure
+      if (e is DioException) {
+        _ref.read(errorProvider.notifier).addDioError(e);
+      } else {
+        _ref.read(errorProvider.notifier).addOptimisticFailure(
+          'Failed to like post. Please try again.',
+        );
+      }
+    }
 
   void _updateFeedPost(String postId, Post updatedPost) {
     final feedNotifier = _ref.read(feedProvider.notifier);
@@ -306,7 +332,25 @@ class RepostInteractionNotifier extends StateNotifier<Map<String, Post>> {
     });
     _timeoutTimers[postId] = timeoutTimer;
 
-    // Step 3: Make API call in background
+    // Step 3: Check connectivity before making API call
+    final isOnline = await _ref.read(isOnlineProvider.future);
+    if (!isOnline) {
+      // Offline: revert optimistic update and show error
+      _revertRepostToggle(
+        postId,
+        originalPost,
+        'No internet connection',
+      );
+      _ref.read(errorProvider.notifier).addError(
+        AppError(
+          message: 'Cannot repost while offline',
+          errorType: ErrorType.network,
+        ),
+      );
+      return;
+    }
+
+    // Step 4: Make API call in background
     try {
       final updatedPost = await _repository.toggleRepost(
         postId: postId,
@@ -318,7 +362,7 @@ class RepostInteractionNotifier extends StateNotifier<Map<String, Post>> {
         return;
       }
 
-      // Step 4: On success - update to confirmed
+      // Step 5: On success - update to confirmed
       final confirmedPost = updatedPost.copyWith(
         optimisticState: OptimisticState.confirmed,
       );
@@ -336,7 +380,7 @@ class RepostInteractionNotifier extends StateNotifier<Map<String, Post>> {
         return;
       }
 
-      // Step 5: On failure - revert changes and set failed state
+      // Step 6: On failure - revert changes and set failed state
       _revertRepostToggle(postId, originalPost, e.toString());
     }
   }
@@ -353,6 +397,17 @@ class RepostInteractionNotifier extends StateNotifier<Map<String, Post>> {
     _pendingRequests.remove(postId);
     _timeoutTimers[postId]?.cancel();
     _timeoutTimers.remove(postId);
+
+    // Show error banner for optimistic failure
+    if (error.contains('DioException') || error.contains('network')) {
+      _ref.read(errorProvider.notifier).addOptimisticFailure(
+        'Failed to repost. Please try again.',
+      );
+    } else {
+      _ref.read(errorProvider.notifier).addOptimisticFailure(
+        'Failed to repost. Please try again.',
+      );
+    }
   }
 
   void _updateFeedPost(String postId, Post updatedPost) {

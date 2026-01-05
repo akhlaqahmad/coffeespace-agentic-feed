@@ -5,6 +5,8 @@ import '../../../../core/cache/cache_providers.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/request_manager.dart';
 import '../../../../core/utils/app_lifecycle.dart';
+import '../../../../core/utils/connectivity_monitor.dart';
+import '../../../../shared/providers/error_provider.dart';
 import '../../data/repositories/feed_repository.dart';
 import '../../data/models/post.dart';
 import '../../../../core/network/models/feed_page.dart';
@@ -29,6 +31,8 @@ class FeedState {
   final bool isLoading;
   final bool isLoadingMore;
   final String? error;
+  final bool isFromCache;
+  final DateTime? cacheTimestamp;
 
   const FeedState({
     this.posts = const [],
@@ -36,6 +40,8 @@ class FeedState {
     this.isLoading = false,
     this.isLoadingMore = false,
     this.error,
+    this.isFromCache = false,
+    this.cacheTimestamp,
   });
 
   FeedState copyWith({
@@ -44,6 +50,8 @@ class FeedState {
     bool? isLoading,
     bool? isLoadingMore,
     String? error,
+    bool? isFromCache,
+    DateTime? cacheTimestamp,
   }) {
     return FeedState(
       posts: posts ?? this.posts,
@@ -51,6 +59,8 @@ class FeedState {
       isLoading: isLoading ?? this.isLoading,
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
       error: error,
+      isFromCache: isFromCache ?? this.isFromCache,
+      cacheTimestamp: cacheTimestamp ?? this.cacheTimestamp,
     );
   }
 
@@ -96,6 +106,7 @@ class FeedNotifier extends StateNotifier<AsyncValue<FeedState>> {
   /// Loads the initial feed page.
   /// 
   /// Shows cached data immediately, then fetches fresh data.
+  /// When offline, serves only from cache.
   Future<void> loadInitial() async {
     state = const AsyncValue.loading();
 
@@ -106,8 +117,32 @@ class FeedNotifier extends StateNotifier<AsyncValue<FeedState>> {
         FeedState(
           posts: cachedFeed.posts,
           nextCursor: cachedFeed.nextCursor,
+          isFromCache: true,
+          cacheTimestamp: DateTime.now(),
         ),
       );
+    }
+
+    // Check connectivity before making network call
+    final isOnline = await _ref.read(isOnlineProvider.future);
+    if (!isOnline) {
+      // Offline: serve only from cache
+      if (cachedFeed != null) {
+        state = AsyncValue.data(
+          FeedState(
+            posts: cachedFeed.posts,
+            nextCursor: cachedFeed.nextCursor,
+            isFromCache: true,
+            cacheTimestamp: DateTime.now(),
+          ),
+        );
+      } else {
+        state = AsyncValue.error(
+          Exception('No internet connection and no cached data available'),
+          StackTrace.current,
+        );
+      }
+      return;
     }
 
     // Fetch fresh data
@@ -121,6 +156,7 @@ class FeedNotifier extends StateNotifier<AsyncValue<FeedState>> {
         FeedState(
           posts: feedPage.posts,
           nextCursor: feedPage.nextCursor,
+          isFromCache: false,
         ),
       );
     } catch (e, stackTrace) {
@@ -131,10 +167,19 @@ class FeedNotifier extends StateNotifier<AsyncValue<FeedState>> {
             posts: cachedFeed.posts,
             nextCursor: cachedFeed.nextCursor,
             error: e.toString(),
+            isFromCache: true,
+            cacheTimestamp: DateTime.now(),
           ),
         );
       } else {
         state = AsyncValue.error(e, stackTrace);
+      }
+
+      // Show error banner for network errors
+      if (e is DioException) {
+        _ref.read(errorProvider.notifier).addDioError(e);
+      } else {
+        _ref.read(errorProvider.notifier).addException(e);
       }
     }
   }
@@ -142,11 +187,25 @@ class FeedNotifier extends StateNotifier<AsyncValue<FeedState>> {
   /// Loads more feed items (pagination).
   /// 
   /// Appends new posts to the existing list using cursor-based pagination.
+  /// When offline, skips network call.
   Future<void> loadMore() async {
     final currentState = state.valueOrNull;
     if (currentState == null ||
         currentState.isLoadingMore ||
         !currentState.hasMore) {
+      return;
+    }
+
+    // Check connectivity before making network call
+    final isOnline = await _ref.read(isOnlineProvider.future);
+    if (!isOnline) {
+      // Offline: can't load more
+      _ref.read(errorProvider.notifier).addError(
+        AppError(
+          message: 'Cannot load more posts while offline',
+          errorType: ErrorType.network,
+        ),
+      );
       return;
     }
 
@@ -175,13 +234,37 @@ class FeedNotifier extends StateNotifier<AsyncValue<FeedState>> {
           error: e.toString(),
         ),
       );
+
+      // Show error banner
+      if (e is DioException) {
+        _ref.read(errorProvider.notifier).addDioError(e);
+      } else {
+        _ref.read(errorProvider.notifier).addException(e);
+      }
     }
   }
 
   /// Refreshes the feed (pull-to-refresh).
   /// 
   /// Clears cache and fetches fresh data from the beginning.
+  /// When offline, serves from cache without clearing.
   Future<void> refresh() async {
+    // Check connectivity before clearing cache
+    final isOnline = await _ref.read(isOnlineProvider.future);
+    if (!isOnline) {
+      // Offline: don't clear cache, just reload from cache
+      final cachedFeed = _repository.getCachedFeed();
+      if (cachedFeed != null) {
+        state = AsyncValue.data(
+          FeedState(
+            posts: cachedFeed.posts,
+            nextCursor: cachedFeed.nextCursor,
+          ),
+        );
+      }
+      return;
+    }
+
     // Clear cache
     await _repository.clearCache();
 
@@ -198,10 +281,18 @@ class FeedNotifier extends StateNotifier<AsyncValue<FeedState>> {
         FeedState(
           posts: feedPage.posts,
           nextCursor: feedPage.nextCursor,
+          isFromCache: false,
         ),
       );
     } catch (e, stackTrace) {
       state = AsyncValue.error(e, stackTrace);
+
+      // Show error banner
+      if (e is DioException) {
+        _ref.read(errorProvider.notifier).addDioError(e);
+      } else {
+        _ref.read(errorProvider.notifier).addException(e);
+      }
     }
   }
 

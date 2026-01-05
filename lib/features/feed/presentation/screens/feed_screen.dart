@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/feed_provider.dart';
 import '../widgets/post_card.dart';
 import '../../../../core/utils/connectivity_monitor.dart';
+import '../../../../shared/widgets/offline_indicator.dart';
 
 /// Feed screen with optimized performance
 class FeedScreen extends ConsumerStatefulWidget {
@@ -65,41 +66,34 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
     await ref.read(feedProvider.notifier).refresh();
   }
 
+  String _formatTimestamp(DateTime timestamp) {
+    final now = DateTime.now();
+    final difference = now.difference(timestamp);
+
+    if (difference.inMinutes < 1) {
+      return 'just now';
+    } else if (difference.inMinutes < 60) {
+      return '${difference.inMinutes}m ago';
+    } else if (difference.inHours < 24) {
+      return '${difference.inHours}h ago';
+    } else {
+      return '${difference.inDays}d ago';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final feedAsync = ref.watch(feedProvider);
-    final onlineStatusAsync = ref.watch(onlineStatusProvider);
-    final isOnline = onlineStatusAsync.valueOrNull ?? true;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Feed'),
-        actions: [
-          // Offline indicator
-          if (!isOnline)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.cloud_off,
-                    size: 20,
-                    color: Colors.orange.shade700,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    'Offline',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.orange.shade700,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-        ],
       ),
-      body: feedAsync.when(
+      body: Column(
+        children: [
+          const OfflineIndicator(),
+          Expanded(
+            child: feedAsync.when(
         data: (feedState) {
           if (feedState.posts.isEmpty) {
             return Center(
@@ -128,10 +122,49 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
             child: ListView.builder(
               controller: _scrollController,
               cacheExtent: 1000, // Preload off-screen items
-              itemCount: feedState.posts.length + (feedState.isLoadingMore ? 1 : 0),
+              itemCount: feedState.posts.length + 
+                  (feedState.isLoadingMore ? 1 : 0) +
+                  (feedState.isFromCache ? 1 : 0),
               itemBuilder: (context, index) {
+                // Show cache indicator at the top if showing cached content
+                if (feedState.isFromCache && index == 0) {
+                  return Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.orange.shade200),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.cached,
+                          size: 16,
+                          color: Colors.orange.shade700,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            feedState.cacheTimestamp != null
+                                ? 'Viewing cached content from ${_formatTimestamp(feedState.cacheTimestamp!)}'
+                                : 'Viewing cached content',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.orange.shade700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                // Adjust index if cache indicator is shown
+                final postIndex = feedState.isFromCache ? index - 1 : index;
+
                 // Show loading indicator at the bottom
-                if (index == feedState.posts.length) {
+                if (postIndex == feedState.posts.length) {
                   return const Padding(
                     padding: EdgeInsets.all(16.0),
                     child: Center(
@@ -140,7 +173,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
                   );
                 }
 
-                final post = feedState.posts[index];
+                final post = feedState.posts[postIndex];
                 return PostCard(
                   key: ValueKey(post.id), // Prevents unnecessary rebuilds
                   post: post,
@@ -185,7 +218,9 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
               ),
             ],
           ),
-        ),
+            ),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {

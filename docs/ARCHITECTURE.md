@@ -62,7 +62,11 @@ lib/
 │   └── error/                         # Error handling
 └── shared/
     ├── widgets/                       # Shared UI components
+    │   ├── error_banner.dart          # Dismissible error banner widget
+    │   ├── error_banner_overlay.dart  # Global error banner overlay
+    │   └── offline_indicator.dart    # Offline status indicator
     └── providers/                     # Shared providers
+        └── error_provider.dart        # Global error state management
 ```
 
 ## Architecture Layers
@@ -590,23 +594,96 @@ ThemeData appTheme(AppThemeRef ref) {
 
 ### Error Types
 
-```dart
-abstract class Failure {
-  String get message;
-}
+The app uses a comprehensive error handling system with three main error types:
 
-class NetworkFailure extends Failure { }
-class ServerFailure extends Failure { }
-class CacheFailure extends Failure { }
-class ValidationFailure extends Failure { }
+```dart
+enum ErrorType {
+  network,        // Network connectivity issues
+  server,         // Server-side errors (5xx, 4xx)
+  optimisticFailure, // Optimistic action failures
+}
 ```
+
+### Error Banner Widget
+
+**Error Banner** (`lib/shared/widgets/error_banner.dart`):
+- Dismissible banner widget for transient errors
+- Auto-dismisses after 5 seconds
+- Different styles for different error types:
+  - Network errors: Orange background with wifi_off icon
+  - Server errors: Red background with error_outline icon
+  - Optimistic failures: Orange background with sync_problem icon
+- Smooth slide and fade animations
+- Can be dismissed by user swipe or close button
+
+**Usage**:
+```dart
+// Show network error
+ErrorBanner.network(
+  message: 'Unable to connect',
+  onDismiss: () => print('Dismissed'),
+);
+
+// Show error from DioException
+ErrorBanner.fromDioException(
+  error: dioException,
+  onDismiss: () => print('Dismissed'),
+);
+```
+
+### Global Error Provider
+
+**Error Provider** (`lib/shared/providers/error_provider.dart`):
+- Centralized error state management using Riverpod
+- Automatically removes errors after 5 seconds
+- Supports adding errors from DioException or generic exceptions
+- Used by all providers to show error banners
+
+**Usage**:
+```dart
+// In providers
+_ref.read(errorProvider.notifier).addDioError(dioException);
+_ref.read(errorProvider.notifier).addException(error);
+_ref.read(errorProvider.notifier).addOptimisticFailure('Failed to like post');
+```
+
+### Error Banner Overlay
+
+**Error Banner Overlay** (`lib/shared/widgets/error_banner_overlay.dart`):
+- Global overlay widget that displays error banners at the top of the screen
+- Should be placed at the root of the app (in `main.dart`)
+- Automatically shows all errors from the error provider
+- Stacks multiple error banners vertically
 
 ### Error Handling Strategy
 
 1. **Try Remote First**: Attempt remote data fetch
 2. **Fallback to Cache**: Use cached data if remote fails
-3. **Show User Feedback**: Display appropriate error messages
-4. **Log Errors**: Track errors for debugging
+3. **Show User Feedback**: Display error banners for transient errors
+4. **Distinguish Error Types**: Network vs server vs optimistic failures
+5. **Keep UI Responsive**: For optimistic actions, show error but keep UI functional
+6. **Auto-dismiss**: Errors automatically dismiss after 5 seconds
+
+### Provider Error Handling
+
+All providers implement comprehensive error handling:
+
+**Feed Provider**:
+- Checks connectivity before making network calls
+- Serves from cache when offline
+- Shows error banners for network/server errors
+- Maintains cached data even when network fails
+
+**Interaction Providers** (Like/Repost):
+- Checks connectivity before optimistic updates
+- Reverts optimistic updates on failure
+- Shows error banners for optimistic failures
+- Keeps UI responsive during errors
+
+**Replies Provider**:
+- Checks connectivity before loading/adding replies
+- Shows error banners for network errors
+- Marks failed replies with failed state for retry
 
 ---
 

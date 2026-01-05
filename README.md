@@ -92,6 +92,8 @@ docs/                 # Project documentation
 - **Caching Layer**: Hive-based caching with stale-while-revalidate strategy
 - **Cache Strategies**: Multiple caching strategies (cache-first, network-first, stale-while-revalidate)
 - **App Lifecycle Monitoring**: Riverpod provider for app lifecycle state management
+- **Error Handling**: Comprehensive error handling with dismissible error banners
+- **Offline Mode**: Full offline support with cached content indicators and offline banners
 
 ## Documentation
 
