@@ -55,6 +55,17 @@ flutter build ios
 ```
 lib/
   main.dart           # Main application entry point
+  features/           # Feature modules
+    feed/             # Feed feature
+      data/models/    # Data models (Post, Author, Reply)
+  core/               # Core functionality
+    network/          # Networking layer
+      api_client.dart      # Mock API client for testing
+      request_manager.dart  # Request cancellation manager
+      mock_data.dart       # Mock data generator (50+ posts)
+      models/             # Network models (FeedPage)
+    utils/            # Utilities
+      connectivity_monitor.dart  # Connectivity monitoring
 android/              # Android-specific code
 ios/                  # iOS-specific code
 test/                 # Widget and unit tests
@@ -64,6 +75,14 @@ docs/                 # Project documentation
   design.json        # Design system configuration
   DOCUMENTATION_WORKFLOW.md  # Documentation workflow guide
 ```
+
+## Key Features
+
+- **Mock API Client**: Realistic API simulation with network delays and failures for testing
+- **Optimistic Updates**: Support for offline-first architecture with optimistic state management
+- **Request Management**: Automatic request cancellation integrated with Riverpod providers
+- **Connectivity Monitoring**: Real-time network status monitoring using connectivity_plus
+- **Mock Data**: 50+ sample posts with varied coffee-related content for testing
 
 ## Documentation
 

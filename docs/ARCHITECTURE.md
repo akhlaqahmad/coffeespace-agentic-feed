@@ -36,8 +36,14 @@ lib/
 │       │   └── agents/                # Agent implementations
 │       └── core/                      # Feature-specific utilities
 ├── core/
+│   ├── network/                       # Networking layer
+│   │   ├── api_client.dart            # Mock API client
+│   │   ├── request_manager.dart       # Request cancellation manager
+│   │   ├── mock_data.dart             # Mock data generator
+│   │   └── models/                    # Network models (FeedPage)
 │   ├── theme/                         # Design system & theming
 │   ├── utils/                         # Shared utilities
+│   │   └── connectivity_monitor.dart  # Connectivity monitoring
 │   ├── constants/                     # App-wide constants
 │   └── error/                         # Error handling
 └── shared/
@@ -243,19 +249,73 @@ All models use:
 
 ### API Client
 
+**Mock API Client** (`lib/core/network/api_client.dart`):
+- Simulated API using Dio for testing optimistic updates and offline scenarios
+- Realistic behaviors:
+  - 300-800ms random delay per request
+  - 20% chance of network failure
+  - Support for CancelToken from Dio
+  - Returns mock data with generated IDs
+
 **Dio Configuration**:
 - Base URL configuration
 - Interceptors for auth, logging, error handling
-- Timeout settings
+- Timeout settings (5 seconds connect/receive)
 - Retry logic for failed requests
 
-**API Structure**:
+**API Endpoints**:
 ```
-GET    /api/v1/feed              # Get feed posts
-POST   /api/v1/posts             # Create post
-POST   /api/v1/posts/:id/like    # Like a post
-POST   /api/v1/posts/:id/reply   # Reply to post
-GET    /api/v1/posts/:id/replies # Get replies
+GET    /feed?cursor={cursor}&limit=20     # Get feed posts with pagination
+POST   /posts/{id}/like                   # Toggle like, returns updated post
+POST   /posts/{id}/repost                 # Toggle repost, returns updated post
+POST   /posts/{id}/replies                # Create reply, returns new reply
+GET    /posts/{id}/replies                # Get list of replies for a post
+```
+
+**Mock Data** (`lib/core/network/mock_data.dart`):
+- Generates 50+ sample posts with varied coffee-related content
+- Manages in-memory state for posts, replies, and authors
+- Supports pagination via cursor-based navigation
+- Tracks like/repost/reply counts and user interactions
+
+**FeedPage Model** (`lib/core/network/models/feed_page.dart`):
+- Paginated response structure with posts list and nextCursor
+- Uses Freezed for immutability
+- Custom JSON converters for List<Post> serialization
+
+### Request Management
+
+**Request Manager** (`lib/core/network/request_manager.dart`):
+- Manages request cancellation for Riverpod providers
+- Integrates with Riverpod's `ref.onDispose` for automatic cleanup
+- Provides CancelToken for Dio requests
+- Ensures pending requests are cancelled when providers are disposed
+
+**Usage**:
+```dart
+final requestManager = ref.createRequestManager();
+final feedPage = await apiClient.getFeed(
+  cancelToken: requestManager.cancelToken,
+);
+```
+
+### Connectivity Monitoring
+
+**Connectivity Monitor** (`lib/core/utils/connectivity_monitor.dart`):
+- Uses `connectivity_plus` package to monitor network status
+- Provides Riverpod providers for connectivity state:
+  - `connectivityStreamProvider`: Streams connectivity changes
+  - `connectivityStatusProvider`: Current connectivity result
+  - `isOnlineProvider`: Simple boolean indicating online status
+  - `onlineStatusProvider`: Streams online/offline status as boolean
+
+**Usage**:
+```dart
+// Check if online
+final isOnline = await ref.read(isOnlineProvider.future);
+
+// Watch online status
+final onlineStatus = ref.watch(onlineStatusProvider);
 ```
 
 ---
