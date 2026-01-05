@@ -178,10 +178,15 @@ class RepliesNotifier extends StateNotifier<RepliesState> {
   }
 
   void _revertReply(String tempId, String error) {
-    // Remove the failed reply
-    final updatedReplies = state.replies
-        .where((reply) => reply.id != tempId)
-        .toList();
+    // Mark the reply as failed instead of removing it
+    final updatedReplies = state.replies.map((reply) {
+      if (reply.id == tempId) {
+        return reply.copyWith(
+          optimisticState: OptimisticState.failed,
+        );
+      }
+      return reply;
+    }).toList();
 
     state = state.copyWith(replies: updatedReplies);
 
@@ -192,6 +197,29 @@ class RepliesNotifier extends StateNotifier<RepliesState> {
     _tempIdToRequestId.remove(tempId);
     _timeoutTimers[tempId]?.cancel();
     _timeoutTimers.remove(tempId);
+  }
+
+  /// Retries a failed reply
+  Future<void> retryReply(String replyId) async {
+    // Find the failed reply
+    final failedReply = state.replies.firstWhere(
+      (reply) => reply.id == replyId,
+      orElse: () => throw Exception('Reply not found: $replyId'),
+    );
+
+    if (failedReply.optimisticState != OptimisticState.failed) {
+      return; // Only retry failed replies
+    }
+
+    // Remove the failed reply from the list
+    final updatedReplies = state.replies
+        .where((reply) => reply.id != replyId)
+        .toList();
+
+    state = state.copyWith(replies: updatedReplies);
+
+    // Retry by calling addReply with the same content
+    await addReply(failedReply.content, failedReply.author);
   }
 
   void _updateParentPostReplyCount(int delta) {

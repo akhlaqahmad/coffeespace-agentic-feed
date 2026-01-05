@@ -40,7 +40,8 @@ lib/
 │       │   │   └── post_detail_screen.dart # Post detail view
 │       │   ├── widgets/               # Reusable UI components
 │       │   │   ├── post_card.dart     # Post card with selective rebuilds
-│       │   │   └── interaction_buttons.dart # Like/repost/reply buttons
+│       │   │   ├── interaction_buttons.dart # Like/repost/reply buttons
+│       │   │   └── reply_item.dart    # Reply item widget with optimistic state
 │       │   └── agents/                # Agent implementations
 │       └── core/                      # Feature-specific utilities
 ├── core/
@@ -273,9 +274,34 @@ UI Update ← Provider Update ← State Change ← Response
   - Uses `ref.read()` for post data to avoid unnecessary rebuilds
 
 **Post Detail Screen** (`lib/features/feed/presentation/screens/post_detail_screen.dart`):
-- Placeholder screen for post detail view
-- Displays full post card with navigation support
-- Can be extended with replies list and additional features
+- Full post detail view with replies functionality
+- Features:
+  - Displays full post card at the top
+  - List of replies below using `ListView.builder` with `SliverList`
+  - Text field at bottom for composing new replies
+  - Pull-to-refresh for replies only (using `RefreshIndicator`)
+  - Automatic scroll-to-bottom when new reply is added
+  - Keyboard-aware layout (adjusts padding when keyboard appears)
+  - Loading states for replies list
+  - Empty state when no replies exist
+- Navigation: Accessed from `PostCard` via `Navigator.push` with post ID
+- State management: Uses `repliesProvider(postId)` for replies state
+- Optimistic updates: New replies appear immediately with pending state
+
+**Reply Item** (`lib/features/feed/presentation/widgets/reply_item.dart`):
+- Displays individual reply with optimistic state handling
+- Features:
+  - Simpler card design than `PostCard` (no interaction buttons)
+  - Shows author info with avatar (using `CachedNetworkImage`)
+  - Displays reply content and timestamp
+  - Visual indicators for optimistic states:
+    - `pending`: Grey background with loading spinner and "Sending..." text
+    - `failed`: Red background with error icon, "Failed to send" text, and retry button
+    - `confirmed`: Normal card appearance
+  - Retry functionality for failed replies
+- Performance optimizations:
+  - Memory-optimized image caching (`memCacheWidth: 80, memCacheHeight: 80`)
+  - Efficient date formatting
 
 ### Optimistic Updates
 
