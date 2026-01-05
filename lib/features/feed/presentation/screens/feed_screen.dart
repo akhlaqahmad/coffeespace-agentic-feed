@@ -1,9 +1,10 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/metrics/metrics_debug_screen.dart';
 import '../providers/feed_provider.dart';
 import '../widgets/post_card.dart';
-import '../../../../core/utils/connectivity_monitor.dart';
 import '../../../../shared/widgets/offline_indicator.dart';
 
 /// Feed screen with optimized performance
@@ -88,6 +89,21 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Feed'),
+        actions: kDebugMode
+            ? [
+                IconButton(
+                  icon: const Icon(Icons.analytics),
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const MetricsDebugScreen(),
+                      ),
+                    );
+                  },
+                  tooltip: 'View Metrics',
+                ),
+              ]
+            : null,
       ),
       body: Column(
         children: [
@@ -218,6 +234,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
               ),
             ],
           ),
+        ),
             ),
           ),
         ],

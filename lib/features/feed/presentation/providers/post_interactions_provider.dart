@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/cache/cache_manager.dart';
 import '../../../../core/cache/cache_providers.dart';
+import '../../../../core/metrics/metrics_collector.dart';
 import '../../../../core/network/request_manager.dart';
 import '../../../../core/utils/connectivity_monitor.dart';
 import '../../../../shared/providers/error_provider.dart';
@@ -166,6 +167,9 @@ class LikeInteractionNotifier extends StateNotifier<Map<String, Post>> {
       }
 
       // Step 5: On success - update to confirmed
+      final metricsCollector = _ref.read(metricsCollectorProvider);
+      metricsCollector.trackOptimisticAction('like', true);
+
       final confirmedPost = updatedPost.copyWith(
         optimisticState: OptimisticState.confirmed,
       );
@@ -189,6 +193,9 @@ class LikeInteractionNotifier extends StateNotifier<Map<String, Post>> {
   }
 
   void _revertLikeToggle(String postId, Post originalPost, String error) {
+    final metricsCollector = _ref.read(metricsCollectorProvider);
+    metricsCollector.trackOptimisticAction('like', false);
+
     final failedPost = originalPost.copyWith(
       optimisticState: OptimisticState.failed,
     );
@@ -196,20 +203,22 @@ class LikeInteractionNotifier extends StateNotifier<Map<String, Post>> {
     _updateFeedPost(postId, failedPost);
     _updateCache(postId, failedPost);
 
-      // Cleanup
-      _pendingRequests.remove(postId);
-      _timeoutTimers[postId]?.cancel();
-      _timeoutTimers.remove(postId);
+    // Cleanup
+    _pendingRequests.remove(postId);
+    _timeoutTimers[postId]?.cancel();
+    _timeoutTimers.remove(postId);
 
-      // Show error banner for optimistic failure
-      if (e is DioException) {
-        _ref.read(errorProvider.notifier).addDioError(e);
-      } else {
-        _ref.read(errorProvider.notifier).addOptimisticFailure(
-          'Failed to like post. Please try again.',
-        );
-      }
+    // Show error banner for optimistic failure
+    if (error.contains('DioException') || error.contains('network')) {
+      _ref.read(errorProvider.notifier).addOptimisticFailure(
+        'Failed to like post. Please try again.',
+      );
+    } else {
+      _ref.read(errorProvider.notifier).addOptimisticFailure(
+        'Failed to like post. Please try again.',
+      );
     }
+  }
 
   void _updateFeedPost(String postId, Post updatedPost) {
     final feedNotifier = _ref.read(feedProvider.notifier);
@@ -363,6 +372,9 @@ class RepostInteractionNotifier extends StateNotifier<Map<String, Post>> {
       }
 
       // Step 5: On success - update to confirmed
+      final metricsCollector = _ref.read(metricsCollectorProvider);
+      metricsCollector.trackOptimisticAction('repost', true);
+
       final confirmedPost = updatedPost.copyWith(
         optimisticState: OptimisticState.confirmed,
       );
@@ -386,6 +398,9 @@ class RepostInteractionNotifier extends StateNotifier<Map<String, Post>> {
   }
 
   void _revertRepostToggle(String postId, Post originalPost, String error) {
+    final metricsCollector = _ref.read(metricsCollectorProvider);
+    metricsCollector.trackOptimisticAction('repost', false);
+
     final failedPost = originalPost.copyWith(
       optimisticState: OptimisticState.failed,
     );

@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import '../../../../core/cache/cache_manager.dart';
+import '../../../../core/metrics/metrics_collector.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/models/feed_page.dart';
 import '../models/post.dart';
@@ -13,14 +14,17 @@ import '../models/reply.dart';
 class FeedRepository {
   final ApiClient _apiClient;
   final CacheManager _cacheManager;
+  final MetricsCollector? _metricsCollector;
   static const String _feedCacheKey = 'feed';
   static const String _feedCursorCacheKey = 'feed_cursor';
 
   FeedRepository({
     required ApiClient apiClient,
     required CacheManager cacheManager,
+    MetricsCollector? metricsCollector,
   })  : _apiClient = apiClient,
-        _cacheManager = cacheManager;
+        _cacheManager = cacheManager,
+        _metricsCollector = metricsCollector;
 
   /// Fetches feed from API with optional cursor for pagination.
   /// 
@@ -69,16 +73,28 @@ class FeedRepository {
 
     // No cache, fetch from network
     try {
+      final stopwatch = Stopwatch()..start();
+      final endpoint = cursor == null ? '/feed' : '/feed?cursor=$cursor';
+      
       final feedPage = await _apiClient.getFeed(
         cursor: cursor,
         cancelToken: cancelToken,
       );
+      
+      stopwatch.stop();
+      _metricsCollector?.trackAPICall(endpoint, true, stopwatch.elapsedMilliseconds.toDouble());
+      
       await _cacheManager.set<Map<String, dynamic>>(
         cacheKey,
         feedPage.toJson(),
       );
       return feedPage;
     } catch (e) {
+      final stopwatch = Stopwatch()..start();
+      final endpoint = cursor == null ? '/feed' : '/feed?cursor=$cursor';
+      stopwatch.stop();
+      _metricsCollector?.trackAPICall(endpoint, false, stopwatch.elapsedMilliseconds.toDouble());
+      
       // If network fails and we have stale cache, return it
       if (cachedFeed != null) {
         return cachedFeed;
@@ -114,11 +130,22 @@ class FeedRepository {
     required String postId,
     CancelToken? cancelToken,
   }) async {
-    final updatedPost = await _apiClient.toggleLike(
-      postId: postId,
-      cancelToken: cancelToken,
-    );
-    return updatedPost;
+    final stopwatch = Stopwatch()..start();
+    final endpoint = '/posts/$postId/like';
+    
+    try {
+      final updatedPost = await _apiClient.toggleLike(
+        postId: postId,
+        cancelToken: cancelToken,
+      );
+      stopwatch.stop();
+      _metricsCollector?.trackAPICall(endpoint, true, stopwatch.elapsedMilliseconds.toDouble());
+      return updatedPost;
+    } catch (e) {
+      stopwatch.stop();
+      _metricsCollector?.trackAPICall(endpoint, false, stopwatch.elapsedMilliseconds.toDouble());
+      rethrow;
+    }
   }
 
   /// Toggles repost status for a post.
@@ -133,11 +160,22 @@ class FeedRepository {
     required String postId,
     CancelToken? cancelToken,
   }) async {
-    final updatedPost = await _apiClient.toggleRepost(
-      postId: postId,
-      cancelToken: cancelToken,
-    );
-    return updatedPost;
+    final stopwatch = Stopwatch()..start();
+    final endpoint = '/posts/$postId/repost';
+    
+    try {
+      final updatedPost = await _apiClient.toggleRepost(
+        postId: postId,
+        cancelToken: cancelToken,
+      );
+      stopwatch.stop();
+      _metricsCollector?.trackAPICall(endpoint, true, stopwatch.elapsedMilliseconds.toDouble());
+      return updatedPost;
+    } catch (e) {
+      stopwatch.stop();
+      _metricsCollector?.trackAPICall(endpoint, false, stopwatch.elapsedMilliseconds.toDouble());
+      rethrow;
+    }
   }
 
   /// Fetches replies for a specific post.
@@ -150,11 +188,22 @@ class FeedRepository {
     required String postId,
     CancelToken? cancelToken,
   }) async {
-    final replies = await _apiClient.getReplies(
-      postId: postId,
-      cancelToken: cancelToken,
-    );
-    return replies;
+    final stopwatch = Stopwatch()..start();
+    final endpoint = '/posts/$postId/replies';
+    
+    try {
+      final replies = await _apiClient.getReplies(
+        postId: postId,
+        cancelToken: cancelToken,
+      );
+      stopwatch.stop();
+      _metricsCollector?.trackAPICall(endpoint, true, stopwatch.elapsedMilliseconds.toDouble());
+      return replies;
+    } catch (e) {
+      stopwatch.stop();
+      _metricsCollector?.trackAPICall(endpoint, false, stopwatch.elapsedMilliseconds.toDouble());
+      rethrow;
+    }
   }
 
   /// Adds a reply to a post.
@@ -169,12 +218,23 @@ class FeedRepository {
     required String content,
     CancelToken? cancelToken,
   }) async {
-    final reply = await _apiClient.createReply(
-      postId: postId,
-      content: content,
-      cancelToken: cancelToken,
-    );
-    return reply;
+    final stopwatch = Stopwatch()..start();
+    final endpoint = '/posts/$postId/replies';
+    
+    try {
+      final reply = await _apiClient.createReply(
+        postId: postId,
+        content: content,
+        cancelToken: cancelToken,
+      );
+      stopwatch.stop();
+      _metricsCollector?.trackAPICall(endpoint, true, stopwatch.elapsedMilliseconds.toDouble());
+      return reply;
+    } catch (e) {
+      stopwatch.stop();
+      _metricsCollector?.trackAPICall(endpoint, false, stopwatch.elapsedMilliseconds.toDouble());
+      rethrow;
+    }
   }
 
   /// Clears the feed cache.

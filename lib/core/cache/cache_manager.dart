@@ -2,6 +2,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import '../../features/feed/data/models/post.dart';
 import '../../features/feed/data/models/reply.dart';
 import '../../features/feed/data/models/author.dart';
+import '../metrics/metrics_collector.dart';
 
 /// A generic cache manager that wraps Hive for typed caching operations.
 /// 
@@ -13,6 +14,10 @@ class CacheManager {
 
   Box? _box;
   bool _initialized = false;
+  final MetricsCollector? _metricsCollector;
+
+  CacheManager({MetricsCollector? metricsCollector})
+      : _metricsCollector = metricsCollector;
 
   /// Initialize the cache manager and open the Hive box.
   /// 
@@ -28,11 +33,19 @@ class CacheManager {
   /// 
   /// Returns null if the key doesn't exist or if the cache is not initialized.
   T? get<T>(String key) {
-    if (!_initialized || _box == null) return null;
+    if (!_initialized || _box == null) {
+      _metricsCollector?.trackCacheMiss(key);
+      return null;
+    }
 
     try {
       final value = _box!.get(key);
-      if (value == null) return null;
+      if (value == null) {
+        _metricsCollector?.trackCacheMiss(key);
+        return null;
+      }
+
+      _metricsCollector?.trackCacheHit(key);
 
       // Handle typed adapters for Post, Reply, and Author
       if (T == Post && value is Map) {
@@ -54,6 +67,7 @@ class CacheManager {
 
       return null;
     } catch (e) {
+      _metricsCollector?.trackCacheMiss(key);
       return null;
     }
   }
@@ -65,26 +79,35 @@ class CacheManager {
   /// 
   /// If [ttl] is not provided, defaults to 5 minutes.
   T? getWithTTL<T>(String key, {Duration? ttl}) {
-    if (!_initialized || _box == null) return null;
+    if (!_initialized || _box == null) {
+      _metricsCollector?.trackCacheMiss(key);
+      return null;
+    }
 
     final effectiveTTL = ttl ?? _defaultTTL;
     final timestampKey = '${key}_timestamp';
     
     try {
       final timestamp = _box!.get(timestampKey) as int?;
-      if (timestamp == null) return null;
+      if (timestamp == null) {
+        _metricsCollector?.trackCacheMiss(key);
+        return null;
+      }
 
       final cachedTime = DateTime.fromMillisecondsSinceEpoch(timestamp);
       final now = DateTime.now();
       
       if (now.difference(cachedTime) > effectiveTTL) {
         // Cache is stale, remove it
+        _metricsCollector?.trackCacheMiss(key);
         delete(key);
         return null;
       }
 
+      // get<T> will track the hit/miss
       return get<T>(key);
     } catch (e) {
+      _metricsCollector?.trackCacheMiss(key);
       return null;
     }
   }

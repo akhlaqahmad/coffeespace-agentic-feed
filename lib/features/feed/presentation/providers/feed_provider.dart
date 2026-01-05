@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/cache/cache_providers.dart';
+import '../../../../core/metrics/metrics_collector.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/request_manager.dart';
 import '../../../../core/utils/app_lifecycle.dart';
@@ -21,6 +22,7 @@ final feedRepositoryProvider = Provider<FeedRepository>((ref) {
   return FeedRepository(
     apiClient: ref.watch(apiClientProvider),
     cacheManager: ref.watch(cacheManagerProvider),
+    metricsCollector: ref.watch(metricsCollectorProvider),
   );
 });
 
