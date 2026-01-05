@@ -5,6 +5,7 @@ import 'features/feed/data/models/post.dart';
 import 'features/feed/data/models/reply.dart';
 import 'features/feed/data/models/author.dart';
 import 'features/feed/data/models/optimistic_state.dart';
+import 'features/feed/presentation/screens/feed_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -42,29 +43,8 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.brown),
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'CoffeeSpace Agentic Feed'),
+      home: const FeedScreen(),
     );
   }
 }
 
-class MyHomePage extends StatelessWidget {
-  const MyHomePage({super.key, required this.title});
-
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(title),
-      ),
-      body: const Center(
-        child: Text(
-          'Welcome to CoffeeSpace',
-          style: TextStyle(fontSize: 24),
-        ),
-      ),
-    );
-  }
-}
