@@ -465,7 +465,11 @@ class MockDataGenerator {
         
         // Comment time: between post creation and now, with some randomness
         final hoursSincePost = now.difference(postCreatedAt).inHours;
-        final commentHoursAgo = _random.nextInt(hoursSincePost.clamp(0, 48));
+        final clampedHours = hoursSincePost.clamp(0, 48);
+        // Ensure we have at least 1 hour to avoid nextInt(0) error
+        final commentHoursAgo = clampedHours > 0 
+            ? _random.nextInt(clampedHours) 
+            : 0;
         final commentCreatedAt = now.subtract(Duration(hours: commentHoursAgo));
         
         final reply = Reply(

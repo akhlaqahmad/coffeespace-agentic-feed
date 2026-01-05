@@ -43,6 +43,8 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
     // Check if we're at 80% of scroll
     final maxScroll = _scrollController.position.maxScrollExtent;
     final currentScroll = _scrollController.position.pixels;
+    // Avoid division by zero when content doesn't fill the screen
+    if (maxScroll <= 0) return;
     final scrollPercentage = currentScroll / maxScroll;
 
     if (scrollPercentage >= 0.8 && !_isLoadingMore) {
