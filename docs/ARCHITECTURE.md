@@ -36,7 +36,11 @@ lib/
 │       ├── presentation/
 │       │   ├── providers/             # Riverpod providers
 │       │   ├── screens/               # Screen widgets
+│       │   │   ├── feed_screen.dart   # Main feed screen with pagination
+│       │   │   └── post_detail_screen.dart # Post detail view
 │       │   ├── widgets/               # Reusable UI components
+│       │   │   ├── post_card.dart     # Post card with selective rebuilds
+│       │   │   └── interaction_buttons.dart # Like/repost/reply buttons
 │       │   └── agents/                # Agent implementations
 │       └── core/                      # Feature-specific utilities
 ├── core/
@@ -220,6 +224,58 @@ UI Update ← Provider Update ← State Change ← Response
   - `loadReplies()`: Loads replies for the post
   - `addReply()`: Adds a reply with optimistic updates
 - Provider family: `repliesProvider(postId)` - one provider instance per post
+
+**Post Interaction State Provider** (`lib/features/feed/presentation/widgets/interaction_buttons.dart`):
+- `postInteractionStateProvider`: Provider family that provides optimistic state for a specific post
+- Allows selective watching of only interaction state, not the entire post
+- Used by `InteractionButtons` widget for optimal performance
+
+### Presentation Components
+
+**Feed Screen** (`lib/features/feed/presentation/screens/feed_screen.dart`):
+- Main feed screen with optimized performance
+- Features:
+  - `RefreshIndicator` for pull-to-refresh functionality
+  - `ListView.builder` with `ValueKey` for each post (prevents unnecessary rebuilds)
+  - `cacheExtent: 1000` for preloading off-screen items
+  - Pagination trigger at 80% scroll with 300ms debounce
+  - Offline indicator in AppBar when disconnected
+  - Floating action button for compose (placeholder)
+- Performance optimizations:
+  - Uses `ValueKey` to prevent widget rebuilds
+  - Debounced pagination to avoid excessive API calls
+  - Efficient scroll listener with cleanup
+
+**Post Card** (`lib/features/feed/presentation/widgets/post_card.dart`):
+- Displays individual post with author info and content
+- Features:
+  - Uses `Consumer` for selective rebuilds (only interaction buttons rebuild, not content)
+  - `CachedNetworkImage` for author avatar with memory cache optimization
+  - Navigates to `PostDetailScreen` on tap
+  - Displays optimistic state visually through `InteractionButtons`
+- Performance optimizations:
+  - Selective watching of feed provider (only reads post, doesn't watch entire feed)
+  - Memory-optimized image caching (`memCacheWidth: 96, memCacheHeight: 96`)
+
+**Interaction Buttons** (`lib/features/feed/presentation/widgets/interaction_buttons.dart`):
+- Like, repost, and reply buttons with counts
+- Features:
+  - Watches only `postInteractionStateProvider(postId)` for optimal performance
+  - Visual feedback for optimistic states:
+    - `pending`: 0.7 opacity on action button
+    - `failed`: Red outline with retry icon
+    - `confirmed`: Normal state
+  - Disables buttons during pending state
+  - Haptic feedback on interaction (`HapticFeedback.mediumImpact` for like/repost, `lightImpact` for reply)
+  - Formatted counts (K for thousands, M for millions)
+- Performance optimizations:
+  - Only watches interaction state, not entire post
+  - Uses `ref.read()` for post data to avoid unnecessary rebuilds
+
+**Post Detail Screen** (`lib/features/feed/presentation/screens/post_detail_screen.dart`):
+- Placeholder screen for post detail view
+- Displays full post card with navigation support
+- Can be extended with replies list and additional features
 
 ### Optimistic Updates
 
@@ -552,11 +608,52 @@ class ValidationFailure extends Failure { }
 ### Strategies
 
 1. **Image Caching**: Using `cached_network_image` for efficient image loading
+   - Memory cache optimization with `memCacheWidth` and `memCacheHeight`
+   - Automatic placeholder and error handling
+   - Reduces memory footprint for avatar images
+
 2. **Lazy Loading**: Load feed content progressively
-3. **Debouncing**: Debounce user input (search, filters)
-4. **Memoization**: Cache expensive computations
-5. **List Optimization**: Use ListView.builder for large lists
-6. **Network Optimization**: Batch requests, minimize payloads
+   - `ListView.builder` with `cacheExtent: 1000` for preloading off-screen items
+   - Pagination trigger at 80% scroll with 300ms debounce
+   - Prevents excessive API calls while maintaining smooth scrolling
+
+3. **Selective Rebuilds**: Optimize widget rebuilds
+   - `ValueKey` for each post in ListView prevents unnecessary rebuilds
+   - `Consumer` widgets for selective watching (only interaction buttons rebuild, not content)
+   - `postInteractionStateProvider` watches only interaction state, not entire post
+   - Use `ref.read()` instead of `ref.watch()` when data doesn't need to trigger rebuilds
+
+4. **Debouncing**: Debounce user input and actions
+   - 300ms debounce for pagination triggers
+   - 500ms debounce for interaction buttons (handled in providers)
+   - Prevents double-taps and excessive API calls
+
+5. **Memoization**: Cache expensive computations
+   - Provider-based caching with Hive
+   - Stale-while-revalidate pattern for feed data
+   - Local cache shown immediately while fresh data loads
+
+6. **List Optimization**: Use ListView.builder for large lists
+   - Efficient rendering of only visible items
+   - Proper key management with `ValueKey` for stable widget identity
+   - Scroll controller cleanup to prevent memory leaks
+
+7. **Network Optimization**: Batch requests, minimize payloads
+   - Request cancellation on dispose and app backgrounding
+   - CancelToken support for aborting in-flight requests
+   - Optimistic updates reduce perceived latency
+
+8. **Haptic Feedback**: Provides tactile feedback without performance cost
+   - `HapticFeedback.mediumImpact` for like/repost actions
+   - `HapticFeedback.lightImpact` for reply actions
+   - Enhances UX without affecting performance
+
+### Performance Targets
+
+- **60fps scrolling**: Achieved through selective rebuilds and efficient ListView usage
+- **Minimal rebuilds**: Only interaction buttons rebuild on state changes, not entire post cards
+- **Fast initial load**: Cached data shown immediately, fresh data loads in background
+- **Smooth pagination**: Debounced triggers prevent janky scrolling behavior
 
 ---
 
