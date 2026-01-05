@@ -8,6 +8,7 @@ import '../../../../core/network/request_manager.dart';
 import '../../../../core/utils/app_lifecycle.dart';
 import '../../../../core/utils/connectivity_monitor.dart';
 import '../../../../shared/providers/error_provider.dart';
+import '../../../../shared/widgets/error_banner.dart';
 import '../../data/repositories/feed_repository.dart';
 import '../../data/models/post.dart';
 import '../../../../core/network/models/feed_page.dart';

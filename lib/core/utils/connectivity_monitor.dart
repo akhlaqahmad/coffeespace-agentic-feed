@@ -40,8 +40,8 @@ Stream<bool> onlineStatus(OnlineStatusRef ref) {
   if (forced != null) {
     return Stream.value(forced);
   }
-  return ref.watch(connectivityStreamProvider).map((result) {
-    return result != ConnectivityResult.none;
-  });
+  // Use read to get the stream directly, then watch it
+  final connectivity = Connectivity();
+  return connectivity.onConnectivityChanged.map((result) => result != ConnectivityResult.none);
 }
 

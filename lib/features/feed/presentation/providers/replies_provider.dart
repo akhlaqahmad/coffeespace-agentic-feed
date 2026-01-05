@@ -6,6 +6,7 @@ import '../../../../core/cache/cache_providers.dart';
 import '../../../../core/network/request_manager.dart';
 import '../../../../core/utils/connectivity_monitor.dart';
 import '../../../../shared/providers/error_provider.dart';
+import '../../../../shared/widgets/error_banner.dart';
 import '../../data/models/post.dart';
 import '../../data/models/reply.dart';
 import '../../data/models/author.dart';

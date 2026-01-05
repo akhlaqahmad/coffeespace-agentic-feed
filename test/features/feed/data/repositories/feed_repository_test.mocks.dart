@@ -101,6 +101,15 @@ class MockApiClient extends _i1.Mock implements _i6.ApiClient {
   }
 
   @override
+  void setFailureRate(double? rate) => super.noSuchMethod(
+        Invocation.method(
+          #setFailureRate,
+          [rate],
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
   _i7.Future<_i2.FeedPage> getFeed({
     String? cursor,
     int? limit = 20,

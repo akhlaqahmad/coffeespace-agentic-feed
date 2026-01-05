@@ -7,6 +7,7 @@ import '../../../../core/metrics/metrics_collector.dart';
 import '../../../../core/network/request_manager.dart';
 import '../../../../core/utils/connectivity_monitor.dart';
 import '../../../../shared/providers/error_provider.dart';
+import '../../../../shared/widgets/error_banner.dart';
 import '../../data/models/post.dart';
 import '../../data/models/optimistic_state.dart';
 import '../../data/repositories/feed_repository.dart';

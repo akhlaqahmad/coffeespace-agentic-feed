@@ -41,7 +41,7 @@ class FeedRepository {
     CancelToken? cancelToken,
   }) async {
     // Use staleWhileRevalidate strategy for optimal UX
-    final cacheKey = cursor == null ? _feedCacheKey : '$_feedCacheKey_$cursor';
+    final cacheKey = cursor == null ? _feedCacheKey : '${_feedCacheKey}_$cursor';
     
     // Get cached data immediately if available
     final cachedJson = _cacheManager.get<Map<String, dynamic>>(cacheKey);
@@ -247,7 +247,7 @@ class FeedRepository {
     // Clear all paginated feed caches
     final keys = _cacheManager.getKeys();
     for (final key in keys) {
-      if (key.startsWith('$_feedCacheKey_')) {
+      if (key.startsWith('${_feedCacheKey}_')) {
         await _cacheManager.delete(key);
       }
     }

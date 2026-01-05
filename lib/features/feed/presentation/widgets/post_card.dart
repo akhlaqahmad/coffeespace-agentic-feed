@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/post.dart';
 import '../../data/models/optimistic_state.dart';
+import '../providers/feed_provider.dart';
 import 'interaction_buttons.dart';
 import '../screens/post_detail_screen.dart';
 

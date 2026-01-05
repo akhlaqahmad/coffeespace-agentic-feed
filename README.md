@@ -102,6 +102,10 @@ Project documentation is located in the `docs/` folder:
 - **[Agents Documentation](docs/agents.md)** - Agent system architecture and implementation
 - **[Architecture Documentation](docs/ARCHITECTURE.md)** - App architecture, patterns, and structure
 - **[Design System](docs/design.json)** - Design tokens, colors, typography, and components
+- **[iOS Build Guide](docs/IOS_BUILD_GUIDE.md)** - Complete guide for building and deploying iOS
+- **[Android Build Guide](docs/ANDROID_BUILD_GUIDE.md)** - Complete guide for building and deploying Android
+- **[Build Bottlenecks Analysis](docs/BUILD_BOTTLENECKS.md)** - Analysis of build-time and runtime bottlenecks
+- **[iOS Build Troubleshooting](docs/IOS_BUILD_TROUBLESHOOTING.md)** - Common iOS build issues and solutions
 - **[Documentation Workflow](docs/DOCUMENTATION_WORKFLOW.md)** - How documentation is automatically updated
 
 For more details on how documentation is automatically maintained, see [Documentation Workflow](docs/DOCUMENTATION_WORKFLOW.md).
