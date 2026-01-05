@@ -107,6 +107,8 @@ class ErrorState {
 
 /// Notifier for managing error state
 class ErrorNotifier extends StateNotifier<ErrorState> {
+  final Map<String, Timer> _autoRemoveTimers = {};
+
   ErrorNotifier() : super(const ErrorState());
 
   /// Adds an error to be displayed
@@ -114,21 +116,32 @@ class ErrorNotifier extends StateNotifier<ErrorState> {
     state = state.addError(error);
 
     // Auto-remove after 5 seconds
-    Timer(const Duration(seconds: 5), () {
+    final timer = Timer(const Duration(seconds: 5), () {
+      if (!mounted) return;
       if (state.errors.any((e) => e.id == error.id)) {
         removeError(error.id!);
       }
+      _autoRemoveTimers.remove(error.id);
     });
+    _autoRemoveTimers[error.id!] = timer;
   }
 
   /// Removes an error by ID
   void removeError(String errorId) {
-    state = state.removeError(errorId);
+    _autoRemoveTimers[errorId]?.cancel();
+    _autoRemoveTimers.remove(errorId);
+    if (mounted) {
+      state = state.removeError(errorId);
+    }
   }
 
   /// Clears all errors
   void clear() {
-    state = state.clear();
+    _autoRemoveTimers.values.forEach((timer) => timer.cancel());
+    _autoRemoveTimers.clear();
+    if (mounted) {
+      state = state.clear();
+    }
   }
 
   /// Adds an error from a DioException

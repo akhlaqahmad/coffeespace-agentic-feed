@@ -48,11 +48,11 @@ class ApiClient {
     }
   }
 
-  /// GET /feed?cursor={cursor}&limit=20
+  /// GET /feed?cursor={cursor}&limit=50
   /// Returns FeedPage with posts and nextCursor
   Future<FeedPage> getFeed({
     String? cursor,
-    int limit = 20,
+    int limit = 50,
     CancelToken? cancelToken,
   }) async {
     await _simulateDelay();

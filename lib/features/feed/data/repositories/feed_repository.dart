@@ -33,11 +33,13 @@ class FeedRepository {
   /// if available, then fetches fresh data in the background.
   /// 
   /// [cursor] - Optional cursor for pagination
+  /// [limit] - Number of posts to fetch per page (default: 50)
   /// [cancelToken] - Token to cancel the request
   /// 
   /// Returns [FeedPage] with posts and nextCursor
   Future<FeedPage> getFeed({
     String? cursor,
+    int limit = 50,
     CancelToken? cancelToken,
   }) async {
     // Use staleWhileRevalidate strategy for optimal UX
@@ -59,6 +61,7 @@ class FeedRepository {
       // Fetch fresh data in background (don't await)
       _apiClient.getFeed(
         cursor: cursor,
+        limit: limit,
         cancelToken: cancelToken,
       ).then((freshFeed) async {
         await _cacheManager.set<Map<String, dynamic>>(
@@ -79,6 +82,7 @@ class FeedRepository {
       
       final feedPage = await _apiClient.getFeed(
         cursor: cursor,
+        limit: limit,
         cancelToken: cancelToken,
       );
       

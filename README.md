@@ -41,8 +41,14 @@ flutter run
 flutter run -d macos    # Run on macOS
 flutter run -d chrome   # Run on Chrome (web)
 
-# Run tests
+# Run all tests
 flutter test
+
+# Run tests with coverage
+flutter test --coverage
+
+# Run specific test file
+flutter test test/features/feed/presentation/providers/feed_provider_test.dart
 
 # Build for Android
 flutter build apk
@@ -107,5 +113,6 @@ Project documentation is located in the `docs/` folder:
 - **[Build Bottlenecks Analysis](docs/BUILD_BOTTLENECKS.md)** - Analysis of build-time and runtime bottlenecks
 - **[iOS Build Troubleshooting](docs/IOS_BUILD_TROUBLESHOOTING.md)** - Common iOS build issues and solutions
 - **[Documentation Workflow](docs/DOCUMENTATION_WORKFLOW.md)** - How documentation is automatically updated
+- **[Testing Strategy](docs/TESTING_STRATEGY.md)** - Comprehensive testing strategy and test coverage
 
 For more details on how documentation is automatically maintained, see [Documentation Workflow](docs/DOCUMENTATION_WORKFLOW.md).

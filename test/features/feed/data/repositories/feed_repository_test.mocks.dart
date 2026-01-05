@@ -112,7 +112,7 @@ class MockApiClient extends _i1.Mock implements _i6.ApiClient {
   @override
   _i7.Future<_i2.FeedPage> getFeed({
     String? cursor,
-    int? limit = 20,
+    int? limit = 50,
     _i8.CancelToken? cancelToken,
   }) =>
       (super.noSuchMethod(

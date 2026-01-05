@@ -143,6 +143,12 @@ class FeedNotifier extends StateNotifier<AsyncValue<FeedState>> {
       return;
     }
 
+    // If we have cached data and we're online, start loading more in background
+    // to reach minimum post count while fresh data loads
+    if (cachedFeed != null) {
+      _loadUntilMinimumPosts(500);
+    }
+
     // Fetch fresh data
     try {
       _currentCancelToken = _requestManager?.cancelToken;
@@ -150,13 +156,16 @@ class FeedNotifier extends StateNotifier<AsyncValue<FeedState>> {
         cancelToken: _currentCancelToken,
       );
 
-      state = AsyncValue.data(
-        FeedState(
-          posts: feedPage.posts,
-          nextCursor: feedPage.nextCursor,
-          isFromCache: false,
-        ),
+      final initialState = FeedState(
+        posts: feedPage.posts,
+        nextCursor: feedPage.nextCursor,
+        isFromCache: false,
       );
+      
+      state = AsyncValue.data(initialState);
+      
+      // Auto-load more pages until we have at least 500 posts
+      _loadUntilMinimumPosts(500);
     } catch (e, stackTrace) {
       // If we have cached data, keep showing it
       if (cachedFeed != null) {
@@ -182,9 +191,54 @@ class FeedNotifier extends StateNotifier<AsyncValue<FeedState>> {
     }
   }
 
+  /// Loads more pages until we have at least [minimumCount] posts.
+  /// 
+  /// This is used to ensure we show a minimum number of posts on initial load.
+  /// Stops when we reach the minimum or when there are no more posts to load.
+  Future<void> _loadUntilMinimumPosts(int minimumCount) async {
+    // Check connectivity
+    final isOnline = await _ref.read(isOnlineProvider.future);
+    if (!isOnline) return;
+    
+    // Load more pages until we reach the minimum
+    while (true) {
+      final currentState = state.valueOrNull;
+      if (currentState == null) break;
+      
+      // Check if we already have enough posts
+      if (currentState.posts.length >= minimumCount) break;
+      
+      // Check if there are more posts to load
+      if (!currentState.hasMore) break;
+      
+      try {
+        _currentCancelToken = _requestManager?.cancelToken;
+        final feedPage = await _repository.getFeed(
+          cursor: currentState.nextCursor,
+          cancelToken: _currentCancelToken,
+        );
+        
+        // Deduplicate posts by ID
+        final existingPostIds = currentState.posts.map((p) => p.id).toSet();
+        final newPosts = feedPage.posts.where((post) => !existingPostIds.contains(post.id)).toList();
+        
+        final updatedState = currentState.copyWith(
+          posts: [...currentState.posts, ...newPosts],
+          nextCursor: feedPage.nextCursor,
+        );
+        
+        state = AsyncValue.data(updatedState);
+      } catch (e) {
+        // Stop loading on error, but don't show error banner for background loading
+        break;
+      }
+    }
+  }
+
   /// Loads more feed items (pagination).
   /// 
   /// Appends new posts to the existing list using cursor-based pagination.
+  /// Deduplicates posts by ID to prevent duplicates.
   /// When offline, skips network call.
   Future<void> loadMore() async {
     final currentState = state.valueOrNull;
@@ -218,8 +272,12 @@ class FeedNotifier extends StateNotifier<AsyncValue<FeedState>> {
         cancelToken: _currentCancelToken,
       );
 
+      // Deduplicate posts by ID to prevent duplicates
+      final existingPostIds = currentState.posts.map((p) => p.id).toSet();
+      final newPosts = feedPage.posts.where((post) => !existingPostIds.contains(post.id)).toList();
+
       final updatedState = currentState.copyWith(
-        posts: [...currentState.posts, ...feedPage.posts],
+        posts: [...currentState.posts, ...newPosts],
         nextCursor: feedPage.nextCursor,
         isLoadingMore: false,
       );

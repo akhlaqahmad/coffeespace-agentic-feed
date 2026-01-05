@@ -711,20 +711,29 @@ All providers implement comprehensive error handling:
 
 ## Testing Strategy
 
-### Unit Tests
-- **Domain Layer**: Test use cases and business logic
-- **Data Layer**: Test repositories, mappers, data sources
-- **Agents**: Test agent logic and decision-making
+For comprehensive testing strategy, see [Testing Strategy Documentation](TESTING_STRATEGY.md).
 
-### Widget Tests
-- **Presentation Layer**: Test UI components in isolation
-- **Provider Integration**: Test provider state changes
-- **User Interactions**: Test user flows
+### Test Coverage
 
-### Integration Tests
-- **End-to-End Flows**: Test complete user journeys
-- **API Integration**: Test with real or mocked APIs
-- **Offline Scenarios**: Test offline functionality
+**Unit Tests**:
+- ✅ Feed Repository: Cache strategies, API integration, error handling
+- ✅ Feed Provider: State transitions, pagination, cache integration
+- ✅ Post Interactions Provider: Optimistic updates, debounce, race conditions, timeouts
+- ✅ Replies Provider: Optimistic updates, retry logic, duplicate prevention
+- ✅ Error Provider: Error state management, auto-dismiss
+- ✅ Cache Manager: TTL logic, serialization, cache operations
+
+**Widget Tests**:
+- ✅ Post Card: Renders content, shows interaction states, handles optimistic states
+
+**Running Tests**:
+```bash
+# Run all tests
+flutter test
+
+# Run with coverage
+flutter test --coverage
+```
 
 ---
 
