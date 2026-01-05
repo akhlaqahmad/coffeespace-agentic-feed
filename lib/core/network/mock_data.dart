@@ -495,11 +495,21 @@ class MockDataGenerator {
   }
 
   List<Post> getFeedPosts({String? cursor, int limit = 20}) {
-    final startIndex = cursor != null
-        ? _postIds.indexWhere((id) => id == cursor)
-        : 0;
+    int startIndex = 0;
     
-    if (startIndex == -1) {
+    if (cursor != null) {
+      // Find the index of the cursor post ID
+      final cursorIndex = _postIds.indexWhere((id) => id == cursor);
+      if (cursorIndex == -1) {
+        // Cursor not found, return empty list
+        return [];
+      }
+      // Start from the next post after the cursor
+      startIndex = cursorIndex + 1;
+    }
+    
+    // If we've reached the end, return empty list
+    if (startIndex >= _postIds.length) {
       return [];
     }
 

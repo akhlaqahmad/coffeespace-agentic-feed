@@ -69,6 +69,13 @@ class LikeInteractionNotifier extends StateNotifier<Map<String, Post>> {
       orElse: () => throw Exception('Post not found: $postId'),
     );
 
+    // Clear failed state if present (user is retrying)
+    if (currentPost.optimisticState == OptimisticState.failed) {
+      final clearedPost = currentPost.copyWith(optimisticState: null);
+      _updateFeedPost(postId, clearedPost);
+      await _updateCache(postId, clearedPost);
+    }
+
     // Check if there's a pending request (prevent concurrent actions)
     if (_pendingRequests.containsKey(postId)) {
       // Cancel old request and let new one proceed
@@ -78,7 +85,10 @@ class LikeInteractionNotifier extends StateNotifier<Map<String, Post>> {
 
     // Generate new request ID
     final requestId = 'like_${DateTime.now().millisecondsSinceEpoch}_${postId}';
-    final originalPost = currentPost;
+    // Use the cleared post if we just cleared it, otherwise use current post
+    final originalPost = currentPost.optimisticState == OptimisticState.failed
+        ? currentPost.copyWith(optimisticState: null)
+        : currentPost;
 
     // Store pending request
     _pendingRequests[postId] = _InteractionRequest(
@@ -276,6 +286,13 @@ class RepostInteractionNotifier extends StateNotifier<Map<String, Post>> {
       orElse: () => throw Exception('Post not found: $postId'),
     );
 
+    // Clear failed state if present (user is retrying)
+    if (currentPost.optimisticState == OptimisticState.failed) {
+      final clearedPost = currentPost.copyWith(optimisticState: null);
+      _updateFeedPost(postId, clearedPost);
+      await _updateCache(postId, clearedPost);
+    }
+
     // Check if there's a pending request
     if (_pendingRequests.containsKey(postId)) {
       _timeoutTimers[postId]?.cancel();
@@ -283,7 +300,10 @@ class RepostInteractionNotifier extends StateNotifier<Map<String, Post>> {
 
     // Generate new request ID
     final requestId = 'repost_${DateTime.now().millisecondsSinceEpoch}_$postId';
-    final originalPost = currentPost;
+    // Use the cleared post if we just cleared it, otherwise use current post
+    final originalPost = currentPost.optimisticState == OptimisticState.failed
+        ? currentPost.copyWith(optimisticState: null)
+        : currentPost;
 
     // Store pending request
     _pendingRequests[postId] = _InteractionRequest(

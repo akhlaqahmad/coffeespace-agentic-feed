@@ -94,6 +94,49 @@ class _FakeOptimisticMetrics_5 extends _i1.SmartFake
         );
 }
 
+class _FakeUserInteractionMetrics_6 extends _i1.SmartFake
+    implements _i5.UserInteractionMetrics {
+  _FakeUserInteractionMetrics_6(
+    Object parent,
+    Invocation parentInvocation,
+  ) : super(
+          parent,
+          parentInvocation,
+        );
+}
+
+class _FakeLifecycleMetrics_7 extends _i1.SmartFake
+    implements _i5.LifecycleMetrics {
+  _FakeLifecycleMetrics_7(
+    Object parent,
+    Invocation parentInvocation,
+  ) : super(
+          parent,
+          parentInvocation,
+        );
+}
+
+class _FakeConnectivityMetrics_8 extends _i1.SmartFake
+    implements _i5.ConnectivityMetrics {
+  _FakeConnectivityMetrics_8(
+    Object parent,
+    Invocation parentInvocation,
+  ) : super(
+          parent,
+          parentInvocation,
+        );
+}
+
+class _FakeErrorMetrics_9 extends _i1.SmartFake implements _i5.ErrorMetrics {
+  _FakeErrorMetrics_9(
+    Object parent,
+    Invocation parentInvocation,
+  ) : super(
+          parent,
+          parentInvocation,
+        );
+}
+
 /// A class which mocks [FeedRepository].
 ///
 /// See the documentation for Mockito's code generation for more information.
@@ -600,6 +643,140 @@ class MockMetricsCollector extends _i1.Mock implements _i5.MetricsCollector {
           ),
         ),
       ) as _i5.OptimisticMetrics);
+
+  @override
+  _i5.UserInteractionMetrics getUserInteractionMetrics() => (super.noSuchMethod(
+        Invocation.method(
+          #getUserInteractionMetrics,
+          [],
+        ),
+        returnValue: _FakeUserInteractionMetrics_6(
+          this,
+          Invocation.method(
+            #getUserInteractionMetrics,
+            [],
+          ),
+        ),
+      ) as _i5.UserInteractionMetrics);
+
+  @override
+  _i5.LifecycleMetrics getLifecycleMetrics() => (super.noSuchMethod(
+        Invocation.method(
+          #getLifecycleMetrics,
+          [],
+        ),
+        returnValue: _FakeLifecycleMetrics_7(
+          this,
+          Invocation.method(
+            #getLifecycleMetrics,
+            [],
+          ),
+        ),
+      ) as _i5.LifecycleMetrics);
+
+  @override
+  _i5.ConnectivityMetrics getConnectivityMetrics() => (super.noSuchMethod(
+        Invocation.method(
+          #getConnectivityMetrics,
+          [],
+        ),
+        returnValue: _FakeConnectivityMetrics_8(
+          this,
+          Invocation.method(
+            #getConnectivityMetrics,
+            [],
+          ),
+        ),
+      ) as _i5.ConnectivityMetrics);
+
+  @override
+  _i5.ErrorMetrics getErrorMetrics() => (super.noSuchMethod(
+        Invocation.method(
+          #getErrorMetrics,
+          [],
+        ),
+        returnValue: _FakeErrorMetrics_9(
+          this,
+          Invocation.method(
+            #getErrorMetrics,
+            [],
+          ),
+        ),
+      ) as _i5.ErrorMetrics);
+
+  @override
+  void trackUserInteraction(
+    String? type, {
+    Map<String, dynamic>? parameters,
+  }) =>
+      super.noSuchMethod(
+        Invocation.method(
+          #trackUserInteraction,
+          [type],
+          {#parameters: parameters},
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  void trackScreenView(
+    String? screenName, {
+    Map<String, dynamic>? parameters,
+  }) =>
+      super.noSuchMethod(
+        Invocation.method(
+          #trackScreenView,
+          [screenName],
+          {#parameters: parameters},
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  void trackLifecycleEvent(
+    String? event, {
+    Map<String, dynamic>? metadata,
+  }) =>
+      super.noSuchMethod(
+        Invocation.method(
+          #trackLifecycleEvent,
+          [event],
+          {#metadata: metadata},
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  void trackConnectivityChange(
+    bool? isOnline, {
+    String? networkType,
+  }) =>
+      super.noSuchMethod(
+        Invocation.method(
+          #trackConnectivityChange,
+          [isOnline],
+          {#networkType: networkType},
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  void trackError(
+    String? type,
+    String? message, {
+    Map<String, dynamic>? context,
+  }) =>
+      super.noSuchMethod(
+        Invocation.method(
+          #trackError,
+          [
+            type,
+            message,
+          ],
+          {#context: context},
+        ),
+        returnValueForMissingStub: null,
+      );
 
   @override
   void reset() => super.noSuchMethod(

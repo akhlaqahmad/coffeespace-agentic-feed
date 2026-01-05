@@ -66,8 +66,8 @@ class ApiClient {
     }
 
     final posts = _mockData.getFeedPosts(cursor: cursor, limit: limit);
-    final nextCursor = posts.length == limit
-        ? 'cursor_${DateTime.now().millisecondsSinceEpoch}'
+    final nextCursor = posts.length == limit && posts.isNotEmpty
+        ? posts.last.id
         : null;
 
     return FeedPage(

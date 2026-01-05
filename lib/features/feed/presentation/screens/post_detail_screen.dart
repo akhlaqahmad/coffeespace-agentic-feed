@@ -123,7 +123,10 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
                 slivers: [
                   // Post content
                   SliverToBoxAdapter(
-                    child: PostCard(post: post),
+                    child: PostCard(
+                      post: post,
+                      disableNavigation: true,
+                    ),
                   ),
                   // Replies header
                   SliverToBoxAdapter(

@@ -10,10 +10,12 @@ import '../screens/post_detail_screen.dart';
 /// Post card widget with selective rebuilds for optimal performance
 class PostCard extends ConsumerWidget {
   final Post post;
+  final bool disableNavigation;
 
   const PostCard({
     super.key,
     required this.post,
+    this.disableNavigation = false,
   });
 
   @override
@@ -31,13 +33,15 @@ class PostCard extends ConsumerWidget {
       child: Card(
       margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
       child: InkWell(
-        onTap: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => PostDetailScreen(postId: currentPost.id),
-            ),
-          );
-        },
+        onTap: disableNavigation
+            ? null
+            : () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => PostDetailScreen(postId: currentPost.id),
+                  ),
+                );
+              },
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
