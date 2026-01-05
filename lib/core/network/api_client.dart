@@ -12,11 +12,22 @@ class ApiClient {
   final Dio _dio;
   final Random _random = Random();
   final MockDataGenerator _mockData = MockDataGenerator();
+  double _currentFailureRate = 0.2;
 
   ApiClient({Dio? dio}) : _dio = dio ?? Dio() {
     _dio.options.baseUrl = 'https://api.coffeespace.mock';
     _dio.options.connectTimeout = const Duration(seconds: 5);
     _dio.options.receiveTimeout = const Duration(seconds: 5);
+  }
+
+  /// Get current failure rate
+  double _getFailureRate() {
+    return _currentFailureRate;
+  }
+
+  /// Set failure rate (called from debug menu)
+  void setFailureRate(double rate) {
+    _currentFailureRate = rate.clamp(0.0, 1.0);
   }
 
   /// Simulates network delay (300-800ms)
@@ -25,9 +36,10 @@ class ApiClient {
     await Future.delayed(Duration(milliseconds: delay));
   }
 
-  /// Simulates network failure (20% chance)
+  /// Simulates network failure based on configurable rate
   void _simulateFailure() {
-    if (_random.nextDouble() < 0.2) {
+    final failureRate = _getFailureRate();
+    if (_random.nextDouble() < failureRate) {
       throw DioException(
         requestOptions: RequestOptions(path: ''),
         type: DioExceptionType.connectionTimeout,

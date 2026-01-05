@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/cache/cache_providers.dart';
 import '../../../../core/metrics/metrics_collector.dart';
-import '../../../../core/network/api_client.dart';
+import '../../../../core/network/api_client_provider.dart';
 import '../../../../core/network/request_manager.dart';
 import '../../../../core/utils/app_lifecycle.dart';
 import '../../../../core/utils/connectivity_monitor.dart';
@@ -11,11 +11,6 @@ import '../../../../shared/providers/error_provider.dart';
 import '../../data/repositories/feed_repository.dart';
 import '../../data/models/post.dart';
 import '../../../../core/network/models/feed_page.dart';
-
-/// Provider for ApiClient instance.
-final apiClientProvider = Provider<ApiClient>((ref) {
-  return ApiClient();
-});
 
 /// Provider for FeedRepository instance.
 final feedRepositoryProvider = Provider<FeedRepository>((ref) {

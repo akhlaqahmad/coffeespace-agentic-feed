@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import '../../../../core/cache/cache_manager.dart';
 import '../../../../core/metrics/metrics_collector.dart';
 import '../../../../core/network/api_client.dart';
+import '../../../../core/network/api_client_provider.dart';
 import '../../../../core/network/models/feed_page.dart';
 import '../models/post.dart';
 import '../models/reply.dart';

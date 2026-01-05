@@ -125,23 +125,30 @@ class _InteractionButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final isPending = optimisticState == OptimisticState.pending;
     
-    Widget button = IconButton(
-      icon: Icon(icon),
-      color: isActive ? Colors.red : Colors.grey.shade700,
-      onPressed: onPressed,
-      iconSize: 20,
+    Widget button = AnimatedSwitcher(
+      duration: const Duration(milliseconds: 200),
+      child: IconButton(
+        key: ValueKey('$icon-$isActive-$isPending'),
+        icon: Icon(icon),
+        color: isActive ? Colors.red : Colors.grey.shade700,
+        onPressed: onPressed,
+        iconSize: 20,
+      ),
     );
 
-    // Apply optimistic state styling
+    // Apply optimistic state styling with animations
     if (isPending) {
-      // Pending: slight opacity (0.7)
-      button = Opacity(
+      // Pending: slight opacity with animation
+      button = AnimatedOpacity(
         opacity: 0.7,
+        duration: const Duration(milliseconds: 200),
         child: button,
       );
     } else if (showFailedState) {
-      // Failed: red outline with retry icon
-      button = Container(
+      // Failed: red outline with retry icon and animation
+      button = AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeInOut,
         decoration: BoxDecoration(
           border: Border.all(color: Colors.red, width: 1.5),
           borderRadius: BorderRadius.circular(8),
@@ -152,16 +159,20 @@ class _InteractionButton extends StatelessWidget {
             Positioned(
               top: 0,
               right: 0,
-              child: Container(
-                padding: const EdgeInsets.all(2),
-                decoration: const BoxDecoration(
-                  color: Colors.red,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.error_outline,
-                  size: 12,
-                  color: Colors.white,
+              child: AnimatedScale(
+                scale: 1.0,
+                duration: const Duration(milliseconds: 200),
+                child: Container(
+                  padding: const EdgeInsets.all(2),
+                  decoration: const BoxDecoration(
+                    color: Colors.red,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.error_outline,
+                    size: 12,
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ),
@@ -175,11 +186,15 @@ class _InteractionButton extends StatelessWidget {
       children: [
         button,
         const SizedBox(width: 4),
-        Text(
-          _formatCount(count),
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey.shade700,
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 200),
+          child: Text(
+            _formatCount(count),
+            key: ValueKey(count),
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey.shade700,
+            ),
           ),
         ),
       ],

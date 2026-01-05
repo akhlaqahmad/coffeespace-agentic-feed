@@ -26,7 +26,8 @@ class PostCard extends ConsumerWidget {
         ) ??
         post;
 
-    return Card(
+    return RepaintBoundary(
+      child: Card(
       margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
       child: InkWell(
         onTap: () {
@@ -64,8 +65,10 @@ class PostCard extends ConsumerWidget {
                               color: Colors.grey.shade300,
                               child: const Icon(Icons.person),
                             ),
-                            memCacheWidth: 96, // Optimize memory usage
-                            memCacheHeight: 96,
+                            memCacheWidth: 96, // Optimize memory usage (2x display size)
+                            memCacheHeight: 96, // Optimize memory usage (2x display size)
+                            maxWidthDiskCache: 200, // Limit disk cache size
+                            maxHeightDiskCache: 200, // Limit disk cache size
                           )
                         : Container(
                             width: 48,
@@ -115,6 +118,7 @@ class PostCard extends ConsumerWidget {
           ),
         ),
       ),
+    ),
     );
   }
 

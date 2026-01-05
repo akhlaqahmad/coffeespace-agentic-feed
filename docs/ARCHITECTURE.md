@@ -46,8 +46,11 @@ lib/
 │       └── core/                      # Feature-specific utilities
 ├── core/
 │   ├── network/                       # Networking layer
-│   │   ├── api_client.dart            # Mock API client
+│   │   ├── api_client.dart            # Mock API client with configurable failure rate
+│   │   ├── api_client_provider.dart   # ApiClient provider with failure rate sync
 │   │   ├── request_manager.dart       # Request cancellation manager
+│   ├── debug/                         # Debug utilities
+│   │   └── debug_menu.dart            # Debug menu with failure rate, cache, connectivity controls
 │   │   ├── mock_data.dart             # Mock data generator
 │   │   └── models/                    # Network models (FeedPage)
 │   ├── cache/                         # Caching layer
@@ -396,9 +399,13 @@ All models use:
 - Simulated API using Dio for testing optimistic updates and offline scenarios
 - Realistic behaviors:
   - 300-800ms random delay per request
-  - 20% chance of network failure
+  - Configurable network failure rate (default 20%, adjustable via debug menu)
   - Support for CancelToken from Dio
   - Returns mock data with generated IDs
+- **ApiClient Provider** (`lib/core/network/api_client_provider.dart`):
+  - Riverpod provider that syncs failure rate from debug menu
+  - Automatically updates API client when failure rate changes
+  - Ensures consistent failure rate across all API calls
 
 **Dio Configuration**:
 - Base URL configuration
@@ -462,17 +469,29 @@ final feedPage = await apiClient.getFeed(
 - Provides Riverpod providers for connectivity state:
   - `connectivityStreamProvider`: Streams connectivity changes
   - `connectivityStatusProvider`: Current connectivity result
-  - `isOnlineProvider`: Simple boolean indicating online status
-  - `onlineStatusProvider`: Streams online/offline status as boolean
+  - `isOnlineProvider`: Simple boolean indicating online status (respects forced connectivity)
+  - `onlineStatusProvider`: Streams online/offline status as boolean (respects forced connectivity)
+- Supports forced connectivity mode from debug menu for testing
+- When forced mode is active, returns the forced value instead of actual connectivity
 
 **Usage**:
 ```dart
-// Check if online
+// Check if online (respects forced connectivity)
 final isOnline = await ref.read(isOnlineProvider.future);
 
-// Watch online status
+// Watch online status (respects forced connectivity)
 final onlineStatus = ref.watch(onlineStatusProvider);
 ```
+
+**Debug Menu** (`lib/core/debug/debug_menu.dart`):
+- Debug-only screen accessible via long-press on app bar (in debug mode)
+- Features:
+  - **Mock API Failure Rate**: Slider to adjust failure rate from 0% to 100%
+  - **Force Connectivity Mode**: Toggle between Auto, Online, and Offline
+  - **Clear All Caches**: Button to clear all cached data
+  - **View Metrics Dashboard**: Quick access to performance metrics
+- All changes take effect immediately
+- Only available in debug builds (`kDebugMode`)
 
 ---
 
@@ -711,9 +730,10 @@ All providers implement comprehensive error handling:
 ### Strategies
 
 1. **Image Caching**: Using `cached_network_image` for efficient image loading
-   - Memory cache optimization with `memCacheWidth` and `memCacheHeight`
+   - Memory cache optimization with `memCacheWidth: 96` and `memCacheHeight: 96` (2x display size)
+   - Disk cache limits with `maxWidthDiskCache: 200` and `maxHeightDiskCache: 200`
    - Automatic placeholder and error handling
-   - Reduces memory footprint for avatar images
+   - Reduces memory footprint for avatar images while maintaining quality
 
 2. **Lazy Loading**: Load feed content progressively
    - `ListView.builder` with `cacheExtent: 1000` for preloading off-screen items
@@ -722,9 +742,11 @@ All providers implement comprehensive error handling:
 
 3. **Selective Rebuilds**: Optimize widget rebuilds
    - `ValueKey` for each post in ListView prevents unnecessary rebuilds
+   - `RepaintBoundary` around `PostCard` widgets isolates repaints
    - `Consumer` widgets for selective watching (only interaction buttons rebuild, not content)
    - `postInteractionStateProvider` watches only interaction state, not entire post
    - Use `ref.read()` instead of `ref.watch()` when data doesn't need to trigger rebuilds
+   - Const constructors wherever possible to enable compile-time optimizations
 
 4. **Debouncing**: Debounce user input and actions
    - 300ms debounce for pagination triggers
@@ -751,12 +773,30 @@ All providers implement comprehensive error handling:
    - `HapticFeedback.lightImpact` for reply actions
    - Enhances UX without affecting performance
 
+9. **Shimmer Loading**: Custom shimmer loading widget for initial feed load
+   - Lightweight custom implementation (no external dependencies)
+   - Smooth animation with `AnimatedBuilder` and `SingleTickerProviderStateMixin`
+   - Provides visual feedback during loading states
+   - Used in `FeedPostShimmer` for skeleton loading of post cards
+
+10. **Smooth Animations**: Animated state transitions for optimistic updates
+    - `AnimatedSwitcher` for icon and count changes (200ms duration)
+    - `AnimatedOpacity` for pending states
+    - `AnimatedContainer` for failed state indicators
+    - Improves perceived performance and provides visual feedback
+
+11. **End-of-Feed Indicator**: Clear feedback when all posts are loaded
+    - Shows "You're all caught up!" message with icon
+    - Prevents user confusion about whether more content is available
+    - Only displayed when `hasMore` is false and posts list is not empty
+
 ### Performance Targets
 
-- **60fps scrolling**: Achieved through selective rebuilds and efficient ListView usage
+- **60fps scrolling**: Achieved through selective rebuilds, RepaintBoundary, and efficient ListView usage
 - **Minimal rebuilds**: Only interaction buttons rebuild on state changes, not entire post cards
-- **Fast initial load**: Cached data shown immediately, fresh data loads in background
+- **Fast initial load**: Shimmer loading provides instant feedback, cached data shown immediately
 - **Smooth pagination**: Debounced triggers prevent janky scrolling behavior
+- **Frame rendering < 16ms**: Optimized for 60fps on both Android and iOS, including lower-end devices
 
 ---
 

@@ -2,10 +2,12 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/debug/debug_menu.dart';
 import '../../../../core/metrics/metrics_debug_screen.dart';
 import '../providers/feed_provider.dart';
 import '../widgets/post_card.dart';
 import '../../../../shared/widgets/offline_indicator.dart';
+import '../../../../shared/widgets/shimmer_loading.dart';
 
 /// Feed screen with optimized performance
 class FeedScreen extends ConsumerStatefulWidget {
@@ -86,25 +88,35 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
   Widget build(BuildContext context) {
     final feedAsync = ref.watch(feedProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Feed'),
-        actions: kDebugMode
-            ? [
-                IconButton(
-                  icon: const Icon(Icons.analytics),
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => const MetricsDebugScreen(),
-                      ),
-                    );
-                  },
-                  tooltip: 'View Metrics',
+    return GestureDetector(
+      onLongPress: kDebugMode
+          ? () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const DebugMenuScreen(),
                 ),
-              ]
-            : null,
-      ),
+              );
+            }
+          : null,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Feed'),
+          actions: kDebugMode
+              ? [
+                  IconButton(
+                    icon: const Icon(Icons.analytics),
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const MetricsDebugScreen(),
+                        ),
+                      );
+                    },
+                    tooltip: 'View Metrics',
+                  ),
+                ]
+              : null,
+        ),
       body: Column(
         children: [
           const OfflineIndicator(),
@@ -128,6 +140,13 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
                           color: Colors.grey.shade600,
                         ),
                   ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Pull down to refresh',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Colors.grey.shade500,
+                        ),
+                  ),
                 ],
               ),
             );
@@ -140,7 +159,8 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
               cacheExtent: 1000, // Preload off-screen items
               itemCount: feedState.posts.length + 
                   (feedState.isLoadingMore ? 1 : 0) +
-                  (feedState.isFromCache ? 1 : 0),
+                  (feedState.isFromCache ? 1 : 0) +
+                  (!feedState.hasMore && feedState.posts.isNotEmpty ? 1 : 0),
               itemBuilder: (context, index) {
                 // Show cache indicator at the top if showing cached content
                 if (feedState.isFromCache && index == 0) {
@@ -179,8 +199,42 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
                 // Adjust index if cache indicator is shown
                 final postIndex = feedState.isFromCache ? index - 1 : index;
 
+                // Show end-of-feed indicator
+                if (!feedState.hasMore && 
+                    feedState.posts.isNotEmpty && 
+                    postIndex == feedState.posts.length) {
+                  return Container(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Center(
+                      child: Column(
+                        children: [
+                          Icon(
+                            Icons.check_circle_outline,
+                            size: 48,
+                            color: Colors.grey.shade400,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            "You're all caught up!",
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  color: Colors.grey.shade600,
+                                ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'No more posts to load',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: Colors.grey.shade500,
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+
                 // Show loading indicator at the bottom
-                if (postIndex == feedState.posts.length) {
+                if (feedState.isLoadingMore && postIndex == feedState.posts.length) {
                   return const Padding(
                     padding: EdgeInsets.all(16.0),
                     child: Center(
@@ -198,8 +252,9 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
             ),
           );
         },
-        loading: () => const Center(
-          child: CircularProgressIndicator(),
+        loading: () => ListView.builder(
+          itemCount: 5,
+          itemBuilder: (context, index) => const FeedPostShimmer(),
         ),
         error: (error, stackTrace) => Center(
           child: Column(
@@ -247,6 +302,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
           );
         },
         child: const Icon(Icons.edit),
+      ),
       ),
     );
   }
