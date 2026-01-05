@@ -33,8 +33,12 @@ This project is a starting point for a Flutter application.
 # Get dependencies
 flutter pub get
 
-# Run on connected device
+# Run on available device (shows list of available devices)
 flutter run
+
+# Run on specific platform
+flutter run -d macos    # Run on macOS
+flutter run -d chrome   # Run on Chrome (web)
 
 # Run tests
 flutter test
