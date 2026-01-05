@@ -25,8 +25,10 @@ lib/
 │       │   └── repositories/          # Data repository implementations
 │       │       └── feed_repository.dart # Feed repository with caching
 │       ├── presentation/
-│       │   └── providers/             # Riverpod providers
-│       │       └── feed_provider.dart # Feed state management with pagination
+│       │   └── providers/                    # Riverpod providers
+│       │       ├── feed_provider.dart        # Feed state management with pagination
+│       │       ├── post_interactions_provider.dart # Like/repost interactions with optimistic updates
+│       │       └── replies_provider.dart      # Replies management with optimistic updates
 │       ├── domain/
 │       │   ├── entities/              # Domain entities
 │       │   ├── repositories/          # Repository interfaces
@@ -185,10 +187,39 @@ UI Update ← Provider Update ← State Change ← Response
   - `loadInitial()`: Loads first page, shows cached data immediately
   - `loadMore()`: Loads next page using cursor-based pagination
   - `refresh()`: Clears cache and fetches fresh data
-  - `toggleLike()`: Optimistic like toggle with rollback on error
-  - `toggleRepost()`: Optimistic repost toggle with rollback on error
+  - `updatePost()`: Updates a single post in the feed state (used by interaction providers)
+  - `updatePostReplyCount()`: Updates reply count for a post (used by replies provider)
+  - `toggleLike()`: Deprecated - use `likeInteractionProvider` instead
+  - `toggleRepost()`: Deprecated - use `repostInteractionProvider` instead
 - Request cancellation: Automatically cancels requests on dispose and when app backgrounds
 - App lifecycle integration: Listens to `appLifecycleProvider` and cancels requests when backgrounded
+
+**Post Interactions Provider** (`lib/features/feed/presentation/providers/post_interactions_provider.dart`):
+- `LikeInteractionNotifier`: Handles like interactions with optimistic updates
+- `RepostInteractionNotifier`: Handles repost interactions with optimistic updates
+- Features:
+  - Request ID tracking to prevent race conditions (later request wins)
+  - Debounce (500ms) to prevent double-taps
+  - Timeout handling (revert after 10s if no response)
+  - Optimistic state management (pending → confirmed/failed)
+  - Cache updates synchronized with UI updates
+- Methods:
+  - `toggleLike()`: Optimistic like toggle with full error handling
+  - `toggleRepost()`: Optimistic repost toggle with full error handling
+
+**Replies Provider** (`lib/features/feed/presentation/providers/replies_provider.dart`):
+- `RepliesNotifier`: Manages replies for a specific post
+- `RepliesState`: Contains replies list, loading state, error state
+- Features:
+  - Temporary ID assignment for new replies until confirmed by API
+  - Optimistic state management for replies
+  - Auto-refresh parent post's replyCount
+  - Duplicate prevention by tracking temp IDs
+  - Timeout handling (revert after 10s)
+- Methods:
+  - `loadReplies()`: Loads replies for the post
+  - `addReply()`: Adds a reply with optimistic updates
+- Provider family: `repliesProvider(postId)` - one provider instance per post
 
 ### Optimistic Updates
 
@@ -202,12 +233,20 @@ enum OptimisticState {
 }
 ```
 
-**Flow**:
-1. User performs action (like, reply)
-2. UI updates immediately with `optimisticState: pending`
-3. Request sent to server
-4. On success: `optimisticState: confirmed`
-5. On failure: `optimisticState: failed`, UI rolls back
+**Optimistic Update Pattern**:
+
+1. **Immediate UI Update**: User action triggers immediate state update with `optimisticState: pending`
+2. **Cache Update**: Local cache updated synchronously
+3. **Background API Call**: Request sent to server in background
+4. **Success Path**: On success, update to `optimisticState: confirmed` with server response
+5. **Failure Path**: On failure, revert changes and set `optimisticState: failed`
+
+**Edge Case Handling**:
+- **Debounce**: 500ms debounce prevents double-tap issues
+- **Race Conditions**: Request ID tracking ensures later requests win
+- **Timeouts**: Automatic revert after 10 seconds if no server response
+- **Concurrent Actions**: Only the latest request for a post is processed
+- **Duplicates**: Temp ID tracking prevents duplicate replies in UI
 
 ---
 

@@ -208,6 +208,10 @@ class FeedNotifier extends StateNotifier<AsyncValue<FeedState>> {
   /// Toggles like status for a post.
   /// 
   /// Updates the post in the feed state optimistically.
+  /// 
+  /// NOTE: This method is kept for backward compatibility.
+  /// New code should use likeInteractionProvider instead.
+  @Deprecated('Use likeInteractionProvider.toggleLike instead')
   Future<void> toggleLike(String postId) async {
     final currentState = state.valueOrNull;
     if (currentState == null) return;
@@ -258,6 +262,10 @@ class FeedNotifier extends StateNotifier<AsyncValue<FeedState>> {
   /// Toggles repost status for a post.
   /// 
   /// Updates the post in the feed state optimistically.
+  /// 
+  /// NOTE: This method is kept for backward compatibility.
+  /// New code should use repostInteractionProvider instead.
+  @Deprecated('Use repostInteractionProvider.toggleRepost instead')
   Future<void> toggleRepost(String postId) async {
     final currentState = state.valueOrNull;
     if (currentState == null) return;
@@ -304,6 +312,44 @@ class FeedNotifier extends StateNotifier<AsyncValue<FeedState>> {
       );
       rethrow;
     }
+  }
+
+  /// Updates a single post in the feed state.
+  /// 
+  /// Used by interaction providers to update posts optimistically.
+  /// This method ensures thread-safe updates and prevents duplicates.
+  void updatePost(String postId, Post updatedPost) {
+    final currentState = state.valueOrNull;
+    if (currentState == null) return;
+
+    final updatedPosts = currentState.posts.map((post) {
+      return post.id == postId ? updatedPost : post;
+    }).toList();
+
+    state = AsyncValue.data(
+      currentState.copyWith(posts: updatedPosts),
+    );
+  }
+
+  /// Updates the reply count for a post.
+  /// 
+  /// Used by replies provider to update parent post's replyCount.
+  void updatePostReplyCount(String postId, int delta) {
+    final currentState = state.valueOrNull;
+    if (currentState == null) return;
+
+    final updatedPosts = currentState.posts.map((post) {
+      if (post.id == postId) {
+        return post.copyWith(
+          replyCount: (post.replyCount + delta).clamp(0, double.infinity).toInt(),
+        );
+      }
+      return post;
+    }).toList();
+
+    state = AsyncValue.data(
+      currentState.copyWith(posts: updatedPosts),
+    );
   }
 }
 
