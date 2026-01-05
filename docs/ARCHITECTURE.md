@@ -22,9 +22,11 @@ lib/
 │   └── feed/
 │       ├── data/
 │       │   ├── models/                # Data models (Post, Author, Reply)
-│       │   ├── repositories/          # Data repository implementations
-│       │   ├── datasources/           # Local & Remote data sources
-│       │   └── mappers/               # Data transformation layer
+│       │   └── repositories/          # Data repository implementations
+│       │       └── feed_repository.dart # Feed repository with caching
+│       ├── presentation/
+│       │   └── providers/             # Riverpod providers
+│       │       └── feed_provider.dart # Feed state management with pagination
 │       ├── domain/
 │       │   ├── entities/              # Domain entities
 │       │   ├── repositories/          # Repository interfaces
@@ -138,19 +140,18 @@ class GetFeedUseCase {
 **Example**:
 ```dart
 // Repository implementation
-class FeedRepositoryImpl implements FeedRepository {
-  final FeedRemoteDataSource remoteDataSource;
-  final FeedLocalDataSource localDataSource;
+class FeedRepository {
+  final ApiClient _apiClient;
+  final CacheManager _cacheManager;
   
-  @override
-  Future<List<Post>> getFeed() async {
-    try {
-      final posts = await remoteDataSource.getFeed();
-      await localDataSource.cacheFeed(posts);
-      return posts;
-    } catch (e) {
-      return localDataSource.getCachedFeed();
+  Future<FeedPage> getFeed({String? cursor, CancelToken? cancelToken}) async {
+    // Uses staleWhileRevalidate: shows cache immediately, fetches fresh in background
+    final cachedFeed = _cacheManager.get<Map<String, dynamic>>('feed');
+    if (cachedFeed != null) {
+      // Return cached data immediately
+      // Fetch fresh data in background
     }
+    // Fetch from network if no cache
   }
 }
 ```
@@ -172,10 +173,22 @@ Riverpod is used throughout the app for state management:
 
 **State Flow**:
 ```
-User Action → Provider Method → Use Case → Repository → Data Source
-                                                              ↓
-UI Update ← Provider Update ← State Change ← Response ←──────┘
+User Action → Provider Method → Repository → Data Source
+                                          ↓
+UI Update ← Provider Update ← State Change ← Response
 ```
+
+**Feed Provider** (`lib/features/feed/presentation/providers/feed_provider.dart`):
+- `FeedNotifier`: Manages feed state with pagination support
+- `FeedState`: Contains posts list, nextCursor, loading states
+- Methods:
+  - `loadInitial()`: Loads first page, shows cached data immediately
+  - `loadMore()`: Loads next page using cursor-based pagination
+  - `refresh()`: Clears cache and fetches fresh data
+  - `toggleLike()`: Optimistic like toggle with rollback on error
+  - `toggleRepost()`: Optimistic repost toggle with rollback on error
+- Request cancellation: Automatically cancels requests on dispose and when app backgrounds
+- App lifecycle integration: Listens to `appLifecycleProvider` and cancels requests when backgrounded
 
 ### Optimistic Updates
 
@@ -288,6 +301,19 @@ GET    /posts/{id}/replies                # Get list of replies for a post
 - Uses Freezed for immutability
 - Custom JSON converters for List<Post> serialization
 
+**Feed Repository** (`lib/features/feed/data/repositories/feed_repository.dart`):
+- Implements feed data operations with caching
+- Methods:
+  - `getFeed(cursor, cancelToken)`: Fetches feed with staleWhileRevalidate strategy
+  - `getCachedFeed()`: Returns cached feed without network request
+  - `toggleLike(postId, cancelToken)`: Toggles like status via API
+  - `toggleRepost(postId, cancelToken)`: Toggles repost status via API
+  - `getReplies(postId, cancelToken)`: Fetches replies for a post
+  - `addReply(postId, content, cancelToken)`: Creates a new reply
+  - `clearCache()`: Clears all feed-related cache
+- Cache Strategy: Uses staleWhileRevalidate - shows cached data immediately while fetching fresh data in background
+- Cache Keys: Uses `feed` for initial page, `feed_{cursor}` for paginated pages
+
 ### Request Management
 
 **Request Manager** (`lib/core/network/request_manager.dart`):
@@ -367,6 +393,11 @@ final result = await executeCacheStrategy<FeedPage>(
   key: 'feed_key',
   fetchFn: () => apiClient.getFeed(),
 );
+
+// Using feed repository (implements staleWhileRevalidate internally)
+final repository = ref.read(feedRepositoryProvider);
+final feedPage = await repository.getFeed(); // Shows cache immediately, fetches fresh in background
+final cachedFeed = repository.getCachedFeed(); // Get cache without network call
 ```
 
 **Boxes**:
@@ -388,6 +419,10 @@ final lifecycleState = ref.watch(appLifecycleProvider);
 if (lifecycleState.isBackgrounded) {
   // Cancel ongoing requests
 }
+
+// Feed provider automatically listens to lifecycle and cancels requests
+final feedNotifier = ref.read(feedProvider.notifier);
+// Requests are automatically cancelled when app backgrounds
 ```
 
 ---
@@ -505,22 +540,24 @@ class ValidationFailure extends Failure { }
 Providers serve as dependency injection:
 
 ```dart
-// Repository provider
-@riverpod
-FeedRepository feedRepository(FeedRepositoryRef ref) {
-  return FeedRepositoryImpl(
-    remoteDataSource: ref.watch(feedRemoteDataSourceProvider),
-    localDataSource: ref.watch(feedLocalDataSourceProvider),
-  );
-}
+// API client provider
+final apiClientProvider = Provider<ApiClient>((ref) {
+  return ApiClient();
+});
 
-// Use case provider
-@riverpod
-GetFeedUseCase getFeedUseCase(GetFeedUseCaseRef ref) {
-  return GetFeedUseCase(
-    ref.watch(feedRepositoryProvider),
+// Repository provider
+final feedRepositoryProvider = Provider<FeedRepository>((ref) {
+  return FeedRepository(
+    apiClient: ref.watch(apiClientProvider),
+    cacheManager: ref.watch(cacheManagerProvider),
   );
-}
+});
+
+// Feed state provider
+final feedProvider = StateNotifierProvider<FeedNotifier, AsyncValue<FeedState>>((ref) {
+  final repository = ref.watch(feedRepositoryProvider);
+  return FeedNotifier(repository, ref);
+});
 ```
 
 ---
