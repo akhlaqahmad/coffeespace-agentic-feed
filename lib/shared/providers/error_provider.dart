@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/metrics/metrics_collector.dart';
 import '../widgets/error_banner.dart';
 
 /// Represents an error that should be displayed to the user
@@ -107,13 +108,17 @@ class ErrorState {
 
 /// Notifier for managing error state
 class ErrorNotifier extends StateNotifier<ErrorState> {
+  final Ref _ref;
   final Map<String, Timer> _autoRemoveTimers = {};
 
-  ErrorNotifier() : super(const ErrorState());
+  ErrorNotifier(this._ref) : super(const ErrorState());
 
   /// Adds an error to be displayed
   void addError(AppError error) {
     state = state.addError(error);
+    
+    // Track error in metrics
+    _trackError(error);
 
     // Auto-remove after 5 seconds
     final timer = Timer(const Duration(seconds: 5), () {
@@ -158,10 +163,27 @@ class ErrorNotifier extends StateNotifier<ErrorState> {
   void addOptimisticFailure(String message) {
     addError(AppError.optimisticFailure(message));
   }
+
+  /// Track error in metrics system
+  void _trackError(AppError error) {
+    try {
+      final metricsCollector = _ref.read(metricsCollectorProvider);
+      metricsCollector.trackError(
+        error.errorType.name,
+        error.message,
+        context: {
+          'id': error.id,
+          'timestamp': error.timestamp.toIso8601String(),
+        },
+      );
+    } catch (e) {
+      // Fail silently - metrics shouldn't break the app
+    }
+  }
 }
 
 /// Provider for error state management
 final errorProvider = StateNotifierProvider<ErrorNotifier, ErrorState>((ref) {
-  return ErrorNotifier();
+  return ErrorNotifier(ref);
 });
 

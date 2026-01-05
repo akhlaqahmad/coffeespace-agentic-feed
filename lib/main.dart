@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'core/utils/connectivity_tracker.dart';
 import 'features/feed/data/models/post.dart';
 import 'features/feed/data/models/reply.dart';
 import 'features/feed/data/models/author.dart';
@@ -34,11 +35,15 @@ void main() async {
   );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Initialize connectivity tracking (runs in background)
+    // This ensures connectivity changes are tracked even if no widget watches it
+    ref.read(connectivityTrackerProvider);
+    
     return MaterialApp(
       title: 'CoffeeSpace Agentic Feed',
       theme: ThemeData(

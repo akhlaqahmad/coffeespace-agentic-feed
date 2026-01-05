@@ -12,6 +12,10 @@ class MetricsDebugScreen extends ConsumerWidget {
     final cacheMetrics = metrics.getCacheMetrics();
     final apiMetrics = metrics.getAPIMetrics();
     final optimisticMetrics = metrics.getOptimisticMetrics();
+    final userInteractionMetrics = metrics.getUserInteractionMetrics();
+    final lifecycleMetrics = metrics.getLifecycleMetrics();
+    final connectivityMetrics = metrics.getConnectivityMetrics();
+    final errorMetrics = metrics.getErrorMetrics();
 
     return Scaffold(
       appBar: AppBar(
@@ -161,9 +165,163 @@ class MetricsDebugScreen extends ConsumerWidget {
               ],
             ),
           ),
+          const SizedBox(height: 24),
+
+          // User Interaction Metrics
+          _buildSection(
+            title: 'User Interaction Metrics',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildMetricRow(
+                  'Total Interactions',
+                  userInteractionMetrics.totalInteractions.toString(),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Interaction Types:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                ...userInteractionMetrics.interactions.entries.map((entry) {
+                  final type = entry.key;
+                  final count = entry.value.length;
+                  
+                  return Padding(
+                    padding: const EdgeInsets.only(left: 16, bottom: 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          type,
+                          style: const TextStyle(fontWeight: FontWeight.w500),
+                        ),
+                        Text(
+                          count.toString(),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // Lifecycle Metrics
+          _buildSection(
+            title: 'App Lifecycle Metrics',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildMetricRow(
+                  'Total Events',
+                  lifecycleMetrics.totalEvents.toString(),
+                ),
+                _buildMetricRow(
+                  'Sessions',
+                  lifecycleMetrics.sessionCount.toString(),
+                ),
+                if (lifecycleMetrics.currentSessionDuration != null)
+                  _buildMetricRow(
+                    'Current Session',
+                    _formatDuration(lifecycleMetrics.currentSessionDuration!),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // Connectivity Metrics
+          _buildSection(
+            title: 'Connectivity Metrics',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildMetricRow(
+                  'State Changes',
+                  connectivityMetrics.totalStateChanges.toString(),
+                ),
+                _buildMetricRow(
+                  'Last Known State',
+                  connectivityMetrics.lastKnownState == null
+                      ? 'Unknown'
+                      : (connectivityMetrics.lastKnownState! ? 'Online' : 'Offline'),
+                ),
+                if (connectivityMetrics.currentOfflineDuration != null)
+                  _buildMetricRow(
+                    'Current Offline Duration',
+                    _formatDuration(connectivityMetrics.currentOfflineDuration!),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // Error Metrics
+          _buildSection(
+            title: 'Error Metrics',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildMetricRow(
+                  'Total Errors',
+                  errorMetrics.totalErrors.toString(),
+                ),
+                _buildMetricRow(
+                  'Error Rate',
+                  '${errorMetrics.errorRate.toStringAsFixed(2)}/hour',
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Error Types:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                ...errorMetrics.errors.entries.map((entry) {
+                  final type = entry.key;
+                  final count = entry.value.length;
+                  
+                  return Padding(
+                    padding: const EdgeInsets.only(left: 16, bottom: 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          type,
+                          style: const TextStyle(fontWeight: FontWeight.w500),
+                        ),
+                        Text(
+                          count.toString(),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
         ],
       ),
     );
+  }
+
+  String _formatDuration(Duration duration) {
+    if (duration.inHours > 0) {
+      return '${duration.inHours}h ${duration.inMinutes % 60}m';
+    } else if (duration.inMinutes > 0) {
+      return '${duration.inMinutes}m ${duration.inSeconds % 60}s';
+    } else {
+      return '${duration.inSeconds}s';
+    }
   }
 
   Widget _buildSection({required String title, required Widget child}) {

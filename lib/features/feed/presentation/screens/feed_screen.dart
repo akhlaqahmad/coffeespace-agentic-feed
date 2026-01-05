@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/debug/debug_menu.dart';
+import '../../../../core/metrics/metrics_collector.dart';
 import '../../../../core/metrics/metrics_debug_screen.dart';
 import '../providers/feed_provider.dart';
 import '../widgets/post_card.dart';
@@ -89,6 +90,16 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
   @override
   Widget build(BuildContext context) {
     final feedAsync = ref.watch(feedProvider);
+    
+    // Track screen view
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      try {
+        final metricsCollector = ref.read(metricsCollectorProvider);
+        metricsCollector.trackScreenView('feed');
+      } catch (e) {
+        // Fail silently - metrics shouldn't break the app
+      }
+    });
 
     return GestureDetector(
       onLongPress: kDebugMode

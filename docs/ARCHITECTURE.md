@@ -58,8 +58,12 @@ lib/
 │   │   ├── cache_strategy.dart        # Cache strategy patterns
 │   │   └── cache_providers.dart       # Cache manager providers
 │   ├── theme/                         # Design system & theming
+│   ├── metrics/                       # Metrics & observability
+│   │   ├── metrics_collector.dart     # Central metrics aggregator
+│   │   └── metrics_debug_screen.dart  # Debug UI for viewing metrics
 │   ├── utils/                         # Shared utilities
 │   │   ├── connectivity_monitor.dart  # Connectivity monitoring
+│   │   ├── connectivity_tracker.dart  # Connectivity change tracking
 │   │   └── app_lifecycle.dart         # App lifecycle state monitoring
 │   ├── constants/                     # App-wide constants
 │   └── error/                         # Error handling
@@ -495,6 +499,74 @@ final onlineStatus = ref.watch(onlineStatusProvider);
   - **View Metrics Dashboard**: Quick access to performance metrics
 - All changes take effect immediately
 - Only available in debug builds (`kDebugMode`)
+
+**Connectivity Tracker** (`lib/core/utils/connectivity_tracker.dart`):
+- Automatically tracks connectivity state changes in metrics system
+- Listens to connectivity changes and records them for observability
+- Initialized in `main.dart` to ensure tracking starts on app launch
+
+---
+
+### Metrics & Observability
+
+**Metrics System** (`lib/core/metrics/`):
+- Comprehensive metrics collection for performance, user behavior, and system health
+- Lightweight, in-memory aggregation with minimal performance overhead
+- Extensible design for third-party analytics integration (Firebase Analytics, Sentry, etc.)
+
+**MetricsCollector** (`lib/core/metrics/metrics_collector.dart`):
+- Central metrics aggregator tracking:
+  - **Cache Metrics**: Hits, misses, hit rate
+  - **API Metrics**: Call counts, success rates, latency per endpoint
+  - **Optimistic Metrics**: Action success rates (likes, reposts)
+  - **User Interactions**: Screen views, user actions
+  - **Lifecycle Metrics**: App state transitions, session duration
+  - **Connectivity Metrics**: State changes, offline duration
+  - **Error Metrics**: Error counts, types, error rates
+- Automatic memory management (limits stored events to prevent memory issues)
+- Provider-based access via `metricsCollectorProvider`
+
+**MetricsDebugScreen** (`lib/core/metrics/metrics_debug_screen.dart`):
+- Development-only UI for viewing real-time metrics
+- Accessible via debug menu or metrics button in feed screen (debug mode only)
+- Displays all metric categories with detailed breakdowns
+- Reset functionality to clear metrics
+
+**Instrumentation Points**:
+- **API Calls**: Automatically tracked in `FeedRepository` with latency measurement
+- **Cache Operations**: Automatically tracked in `CacheManager` (hits/misses)
+- **User Interactions**: Tracked in interaction providers (likes, reposts)
+- **Screen Views**: Tracked in screen widgets (e.g., `FeedScreen`)
+- **App Lifecycle**: Tracked in `AppLifecycleNotifier` (foreground/background transitions)
+- **Connectivity**: Tracked via `ConnectivityTracker` provider
+- **Errors**: Tracked in `ErrorNotifier` when errors are added
+
+**Usage**:
+```dart
+// Access metrics collector
+final metricsCollector = ref.read(metricsCollectorProvider);
+
+// Track custom events
+metricsCollector.trackUserInteraction('button_click', {'button': 'refresh'});
+metricsCollector.trackScreenView('post_detail', {'post_id': postId});
+
+// View metrics in debug screen
+Navigator.push(context, MaterialPageRoute(
+  builder: (_) => const MetricsDebugScreen(),
+));
+```
+
+**Third-Party Integration**:
+- Designed for easy integration with Firebase Analytics, Sentry, Mixpanel, etc.
+- See [METRICS_OBSERVABILITY.md](./METRICS_OBSERVABILITY.md) for detailed integration guide
+- Metrics collection is non-blocking and fails gracefully
+
+**Privacy**:
+- No PII (Personally Identifiable Information) collection
+- Anonymized user identifiers
+- GDPR/CCPA compliant design
+
+For comprehensive documentation, see [METRICS_OBSERVABILITY.md](./METRICS_OBSERVABILITY.md).
 
 ---
 
