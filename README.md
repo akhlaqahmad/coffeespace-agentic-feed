@@ -58,4 +58,20 @@ lib/
 android/              # Android-specific code
 ios/                  # iOS-specific code
 test/                 # Widget and unit tests
+docs/                 # Project documentation
+  agents.md          # Agent system documentation
+  ARCHITECTURE.md    # Architecture and patterns
+  design.json        # Design system configuration
+  DOCUMENTATION_WORKFLOW.md  # Documentation workflow guide
 ```
+
+## Documentation
+
+Project documentation is located in the `docs/` folder:
+
+- **[Agents Documentation](docs/agents.md)** - Agent system architecture and implementation
+- **[Architecture Documentation](docs/ARCHITECTURE.md)** - App architecture, patterns, and structure
+- **[Design System](docs/design.json)** - Design tokens, colors, typography, and components
+- **[Documentation Workflow](docs/DOCUMENTATION_WORKFLOW.md)** - How documentation is automatically updated
+
+For more details on how documentation is automatically maintained, see [Documentation Workflow](docs/DOCUMENTATION_WORKFLOW.md).

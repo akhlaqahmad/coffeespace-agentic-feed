@@ -1,0 +1,119 @@
+{
+  "meta": {
+    "product": "CoffeeSpace",
+    "platform": "mobile",
+    "theme": "dark",
+    "scope": "theme-only",
+    "design_intent": "professional, calm, relationship-driven"
+  },
+
+  "colors": {
+    "background": "#0E1114",
+    "surface": "#151A1E",
+    "surfaceElevated": "#1C2227",
+    "primary": "#E64A6A",
+    "primaryMuted": "#7A2A3A",
+    "success": "#3CCB7F",
+    "warning": "#F5C26B",
+    "textPrimary": "#FFFFFF",
+    "textSecondary": "#A0A6AD",
+    "textMuted": "#6E747B",
+    "divider": "#232A30"
+  },
+
+  "typography": {
+    "title": {
+      "fontSize": 28,
+      "fontWeight": "600"
+    },
+    "sectionTitle": {
+      "fontSize": 20,
+      "fontWeight": "600"
+    },
+    "body": {
+      "fontSize": 15,
+      "fontWeight": "400"
+    },
+    "caption": {
+      "fontSize": 13,
+      "fontWeight": "400"
+    },
+    "badge": {
+      "fontSize": 12,
+      "fontWeight": "500"
+    }
+  },
+
+  "spacing": {
+    "xs": 4,
+    "sm": 8,
+    "md": 16,
+    "lg": 24,
+    "xl": 32
+  },
+
+  "components": {
+    "Card": {
+      "radius": 16,
+      "background": "surfaceElevated",
+      "padding": "md"
+    },
+
+    "PrimaryButton": {
+      "radius": 24,
+      "background": "primary",
+      "textColor": "textPrimary"
+    },
+
+    "Badge": {
+      "radius": 16,
+      "padding": "sm",
+      "variants": {
+        "active": "success",
+        "passive": "primary",
+        "neutral": "surfaceElevated"
+      }
+    },
+
+    "Avatar": {
+      "shape": "circle",
+      "sizes": {
+        "sm": 40,
+        "md": 56,
+        "lg": 72
+      }
+    },
+
+    "EmptyState": {
+      "icon": "coffee",
+      "textAlignment": "center",
+      "textColor": "textMuted"
+    },
+
+    "ChatBubble": {
+      "radius": 18,
+      "outgoing": {
+        "background": "primaryMuted",
+        "textColor": "textPrimary"
+      },
+      "incoming": {
+        "background": "surfaceElevated",
+        "textColor": "textPrimary"
+      }
+    }
+  },
+
+  "interaction": {
+    "feedback": {
+      "haptic": true,
+      "snackbar": true
+    }
+  },
+
+  "accessibility": {
+    "minTapTarget": 44,
+    "contrast": "AA",
+    "supportsDynamicText": true
+  }
+}
+

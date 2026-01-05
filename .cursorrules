@@ -1,0 +1,108 @@
+# Cursor Rules for CoffeeSpace Agentic Feed
+
+## Documentation Workflow
+
+**CRITICAL**: After completing any code changes, modifications, or feature additions, you MUST automatically analyze the changes and update relevant documentation.
+
+### Documentation Analysis Workflow
+
+1. **After Every Code Change Session**:
+   - Analyze all modified/created files
+   - Determine which documentation files need updates
+   - Update documentation before marking the task as complete
+
+2. **Documentation Files to Check**:
+   - `docs/agents.md` - Update if agent logic, providers, or agent-related code changes
+   - `docs/ARCHITECTURE.md` - Update if architecture patterns, layers, or structure changes
+   - `docs/design.json` - Update if design system, colors, typography, or components change
+   - `README.md` - Update if setup, installation, or project overview changes
+   - Create new docs in `docs/` folder if new features, modules, or significant concepts are introduced
+
+3. **Change Detection Rules**:
+
+   **Update `docs/agents.md` when**:
+   - New agent classes/providers are created
+   - Agent logic, algorithms, or decision-making changes
+   - Agent communication patterns change
+   - New agent types are introduced
+   - Agent configuration or settings change
+
+   **Update `docs/ARCHITECTURE.md` when**:
+   - New folders/modules are added to `lib/`
+   - Repository patterns change
+   - State management patterns change (new providers, state structures)
+   - Data models change (new fields, relationships)
+   - New dependencies are added to `pubspec.yaml`
+   - Networking layer changes
+   - Storage layer changes
+
+   **Update `docs/design.json` when**:
+   - New colors are added
+   - Typography scales change
+   - Spacing values change
+   - New component styles are defined
+   - Theme values change
+
+   **Update `README.md` when**:
+   - Installation steps change
+   - Dependencies change
+   - Build/deployment process changes
+   - Project structure significantly changes
+
+4. **Documentation Update Process**:
+   - Read the current documentation file
+   - Identify sections that need updates
+   - Update existing sections with new information
+   - Add new sections if new concepts are introduced
+   - Maintain consistency with existing documentation style
+   - Include code examples when relevant
+
+5. **Automatic Execution**:
+   - Run documentation analysis at the END of each coding session
+   - Before saying "done" or "complete", verify documentation is updated
+   - If unsure about a change, err on the side of updating documentation
+   - Read existing documentation files before updating to maintain consistency
+   - Use `read_file` tool to read current docs, then `search_replace` or `write` to update
+
+6. **Documentation Analysis Process (MANDATORY)**:
+   After completing code changes, you MUST:
+   a) List all files that were created/modified
+   b) For each file, determine which documentation it affects using the rules above
+   c) Read the affected documentation files
+   d) Update the documentation with new/changed information
+   e) Maintain the existing documentation style and format
+   f) Report what was updated in your response
+
+### Code Style
+
+- Follow Flutter/Dart best practices
+- Use Freezed for immutable models
+- Use Riverpod for state management
+- Follow Clean Architecture principles
+- Write tests for new features
+
+### File Naming
+
+- Use snake_case for Dart files
+- Use PascalCase for classes
+- Use lowercase for directories
+- Feature-based organization in `lib/features/`
+
+### When to Create New Documentation
+
+Create a new `.md` file when:
+- A new major feature is introduced that needs dedicated documentation
+- A new architectural pattern is introduced
+- API documentation is needed
+- Contributing guidelines are needed
+- Deployment procedures are needed
+
+### Documentation Standards
+
+- Use Markdown format
+- Include code examples with syntax highlighting
+- Keep documentation up-to-date with code
+- Write clear, concise explanations
+- Use diagrams when helpful (ASCII art is acceptable)
+- Link between related documentation files
+
