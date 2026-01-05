@@ -88,7 +88,7 @@ docs/                 # Project documentation
 - **Optimistic Updates**: Support for offline-first architecture with optimistic state management
 - **Request Management**: Automatic request cancellation integrated with Riverpod providers
 - **Connectivity Monitoring**: Real-time network status monitoring using connectivity_plus
-- **Mock Data**: 50+ sample posts with varied coffee-related content for testing
+- **Mock Data**: 50+ sample posts with pre-initialized comments and varied coffee-related content for testing
 - **Caching Layer**: Hive-based caching with stale-while-revalidate strategy
 - **Cache Strategies**: Multiple caching strategies (cache-first, network-first, stale-while-revalidate)
 - **App Lifecycle Monitoring**: Riverpod provider for app lifecycle state management

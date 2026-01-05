@@ -424,9 +424,12 @@ GET    /posts/{id}/replies                # Get list of replies for a post
 
 **Mock Data** (`lib/core/network/mock_data.dart`):
 - Generates 50+ sample posts with varied coffee-related content
+- Pre-initializes comments/replies for posts (0-8 comments per post)
+- Includes post-specific contextual comments and generic comments
 - Manages in-memory state for posts, replies, and authors
 - Supports pagination via cursor-based navigation
 - Tracks like/repost/reply counts and user interactions
+- Reply counts in posts match the actual number of initialized replies
 
 **FeedPage Model** (`lib/core/network/models/feed_page.dart`):
 - Paginated response structure with posts list and nextCursor
