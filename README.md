@@ -101,6 +101,14 @@ docs/                 # Project documentation
 - **Error Handling**: Comprehensive error handling with dismissible error banners
 - **Offline Mode**: Full offline support with cached content indicators and offline banners
 
+## Required Write-ups
+
+Essential documentation for understanding the project's core strategies and workflows:
+
+- **[Testing Strategy](required-write-ups/TESTING_STRATEGY.md)** - Comprehensive testing strategy and test coverage
+- **[Metrics & Observability](required-write-ups/METRICS_OBSERVABILITY.md)** - Metrics, monitoring, and observability implementation
+- **[Agentic Workflow](required-write-ups/AGENTIC_WORKFLOW.md)** - Agentic workflow architecture and implementation
+
 ## Documentation
 
 Project documentation is located in the `docs/` folder:
@@ -113,6 +121,5 @@ Project documentation is located in the `docs/` folder:
 - **[Build Bottlenecks Analysis](docs/BUILD_BOTTLENECKS.md)** - Analysis of build-time and runtime bottlenecks
 - **[iOS Build Troubleshooting](docs/IOS_BUILD_TROUBLESHOOTING.md)** - Common iOS build issues and solutions
 - **[Documentation Workflow](docs/DOCUMENTATION_WORKFLOW.md)** - How documentation is automatically updated
-- **[Testing Strategy](docs/TESTING_STRATEGY.md)** - Comprehensive testing strategy and test coverage
 
 For more details on how documentation is automatically maintained, see [Documentation Workflow](docs/DOCUMENTATION_WORKFLOW.md).
